@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>IRON LOG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F2EDE4;--bg2:#EAE4DA;--card:#FDFAF6;--card2:#F0EAE0;
+  --ink:#1A1714;--ink2:#5C5650;--ink3:#A09890;
+  --border:rgba(26,23,20,.1);--border2:rgba(26,23,20,.18);
+  --hinge:#C4583A;--push:#C49A3A;--pull:#3A6EC4;
+  --squat:#3AA46E;--core:#8A3AC4;--carry:#C43A8A;
+  --green:#3AA46E;--red:#C4583A;
+  --fd:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+  --r:12px;--rsm:8px;
+}
+[data-dark]{
+  --bg:#141210;--bg2:#1C1A17;--card:#201E1A;--card2:#2A2824;
+  --ink:#F2EDE4;--ink2:#9A9488;--ink3:#5A5650;
+  --border:rgba(242,237,228,.08);--border2:rgba(242,237,228,.15);
+}
+html,body,#root{height:100%;background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.5;overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+/* scrollbar */
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+/* typography */
+.fd{font-family:var(--fd)}
+.fm{font-family:var(--fm)}
+/* layout */
+.app{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;overflow:hidden;position:relative}
+@media(min-width:431px){.app{box-shadow:0 0 80px rgba(0,0,0,.15);border-inline:1px solid var(--border)}}
+/* header */
+.hdr{flex-shrink:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--bg);border-bottom:2px solid var(--ink)}
+.logo{font-family:var(--fd);font-size:26px;letter-spacing:.04em;color:var(--ink)}
+.hdr-right{display:flex;gap:8px;align-items:center}
+.ctrl{height:30px;padding:0 12px;border-radius:30px;background:none;border:1.5px solid var(--border2);color:var(--ink2);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.ctrl:hover{background:var(--ink);color:var(--bg)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink3);cursor:pointer;transition:all .3s;flex-shrink:0}
+.dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot.syncing{background:var(--push);animation:blink .7s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+/* nav */
+.nav{flex-shrink:0;order:99;height:62px;display:flex;background:var(--bg);border-top:2px solid var(--ink)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--ink3);font-family:var(--fb);font-size:10px;font-weight:600;letter-spacing:.04em;transition:color .15s;padding:0;position:relative}
+.nb.on{color:var(--ink)}
+.nb.on::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--ink)}
+.nb-ico{font-size:19px;line-height:1}
+/* content */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* screen */
+.screen{animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:46px;padding:0 22px;border-radius:30px;border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:600;transition:all .15s;text-transform:none}
+.btn:active{transform:scale(.96)}
+.btn-ink{background:var(--ink);color:var(--bg)}
+.btn-ink:hover{opacity:.85}
+.btn-out{background:none;border:1.5px solid var(--border2);color:var(--ink2)}
+.btn-out:hover{border-color:var(--ink);color:var(--ink)}
+.btn-sm{height:34px;padding:0 14px;font-size:12px}
+.btn-xs{height:28px;padding:0 10px;font-size:11px}
+.btn-red{background:rgba(196,88,58,.1);border:1px solid rgba(196,88,58,.3);color:var(--red)}
+/* inputs */
+.inp{width:100%;padding:10px 12px;background:var(--card2);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--ink);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--ink)}
+.inp::placeholder{color:var(--ink3)}
+/* tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-family:var(--fm);font-size:10px;border:1.5px solid;background:transparent}
+/* chips */
+.chip{display:inline-flex;align-items:center;padding:6px 13px;border-radius:20px;flex-shrink:0;background:var(--card);border:1.5px solid var(--border);color:var(--ink3);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+/* cards */
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.card-press{cursor:pointer;transition:all .15s}
+.card-press:hover{border-color:var(--ink)}
+.card-press:active{transform:scale(.99)}
+/* overlay + modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:dimIn .2s ease}
+@keyframes dimIn{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.55)}}
+.modal{width:100%;max-width:430px;background:var(--card);border-top:2px solid var(--ink);border-radius:18px 18px 0 0;max-height:92vh;overflow-y:auto;animation:slideUp .25s cubic-bezier(.3,1,.3,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{cursor:grab}
+.modal-hdr{padding:12px 20px 12px;border-bottom:1.5px solid var(--border)}
+.modal-title{font-family:var(--fd);font-size:28px;line-height:1}
+.modal-body{padding:16px 20px 36px;display:flex;flex-direction:column;gap:12px}
+.picker-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.picker-row:active,.picker-row:hover{background:var(--card2)}
+/* labels */
+.sec-lbl{font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+/* HOME */
+.home-hero{padding:20px 18px 16px;border-bottom:1.5px solid var(--border)}
+.home-greeting{font-family:var(--fm);font-size:11px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.home-big{font-family:var(--fd);font-size:52px;line-height:.9;margin-bottom:2px}
+.week-strip{display:flex;padding:14px 18px;gap:6px;border-bottom:1.5px solid var(--border);background:var(--bg2)}
+.wd{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wd-name{font-family:var(--fb);font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase}
+.wd-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:12px;color:var(--ink3);border:1.5px solid var(--border);background:var(--card)}
+.wd-dot.trained{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wd-dot.today{border-color:var(--ink);color:var(--ink);font-weight:700}
+.wd-dot.trained.today{background:var(--hinge);border-color:var(--hinge)}
+.quote-card{margin:14px 18px;padding:14px 16px;background:var(--card2);border:1.5px solid var(--border);border-radius:var(--r);border-left:3px solid var(--push)}
+.home-stats{display:flex;margin:0 18px 14px;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.hstat{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border)}
+.hstat:last-child{border-right:none}
+.hstat-v{font-family:var(--fd);font-size:28px;line-height:1}
+.hstat-l{font-family:var(--fm);font-size:9px;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.act-grid{display:flex;gap:10px;flex-wrap:wrap;padding:0 18px}
+.act-card{flex:1;min-width:calc(50% - 5px);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.act-card:hover{border-color:var(--ink)}.act-card:active{transform:scale(.97)}
+.act-ico{font-size:24px;margin-bottom:6px}
+.act-title{font-family:var(--fd);font-size:19px;line-height:1.1;margin-bottom:2px}
+.act-sub{font-size:11px;color:var(--ink3)}
+/* LIBRARY */
+.ex-row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative}
+.ex-row:active{background:var(--card2)}
+.ex-ico{width:42px;height:42px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--card2);border:1px solid var(--border);flex-shrink:0}
+/* PROGRAMS */
+.prog-tabs{display:flex;border-bottom:2px solid var(--ink);background:var(--bg2)}
+.pt{flex:1;padding:11px 0;text-align:center;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.pt.on{color:var(--ink);border-bottom-color:var(--ink)}
+.prog-card{margin:0 18px 10px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .15s}
+.prog-card:hover{border-color:var(--ink)}.prog-card:active{transform:scale(.99)}
+.prog-head{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border)}
+.prog-ico{font-size:22px;width:44px;height:44px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prog-blocks-row{display:flex;gap:5px;padding:10px 14px;flex-wrap:wrap}
+.prog-block-chip{padding:3px 8px;border-radius:20px;font-family:var(--fm);font-size:10px;border:1px solid var(--border2);color:var(--ink2);background:var(--bg2)}
+/* COMPLEXES */
+.cx-card{margin:0 18px 10px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .15s}
+.cx-card:hover{border-color:var(--ink)}.cx-card:active{transform:scale(.99)}
+.cx-top{padding:14px;border-bottom:1px solid var(--border)}
+.cx-badge{display:inline-flex;align-items:center;gap:5px;margin-bottom:6px}
+.cx-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--push)}
+.cx-chain{padding:10px 14px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)}
+.cx-step{padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-family:var(--fb);font-size:12px;font-weight:600}
+.cx-step small{display:block;font-family:var(--fm);font-size:10px;color:var(--ink3);font-weight:400}
+.cx-meta{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--border)}
+/* SESSION */
+.energy-screen{position:fixed;inset:0;background:var(--bg);z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;max-width:430px;margin:0 auto;animation:fadeUp .2s ease}
+.ec-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;margin:24px 0 0}
+.ec-opt{padding:18px 12px;border:2px solid var(--border2);border-radius:var(--r);background:var(--card);cursor:pointer;transition:all .15s;text-align:center}
+.ec-opt:hover{border-color:var(--ink)}.ec-opt.sel{border-color:var(--ink);background:var(--ink)}
+.ec-opt.sel span,.ec-opt.sel p{color:var(--bg) !important}
+.sess-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--bg2);border-bottom:2px solid var(--ink)}
+.elapsed-badge{font-family:var(--fm);font-size:20px;background:var(--card);border:1.5px solid var(--border);padding:4px 12px;border-radius:20px}
+/* TIMER */
+.timer-wrap{margin:14px 18px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.timer-tabs{display:flex;border-bottom:1.5px solid var(--border)}
+.tt{flex:1;padding:10px 0;text-align:center;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s;cursor:pointer}
+.tt.on{color:var(--ink);border-bottom-color:var(--ink)}
+.timer-cfg{display:flex;padding:10px 12px;gap:8px;border-bottom:1.5px solid var(--border)}
+.cfg-item{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cfg-row{display:flex;align-items:center;gap:8px}
+.cfg-num{font-family:var(--fm);font-size:22px;min-width:32px;text-align:center}
+.cfg-btn{width:46px;height:46px;border-radius:50%;background:var(--card);border:1.5px solid var(--border2);color:var(--ink);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;user-select:none;font-weight:300}
+.cfg-btn:active{background:var(--ink);color:var(--bg);transform:scale(.9)}
+.timer-face{padding:18px 14px 14px;text-align:center}
+.t-time{font-family:var(--fd);font-size:72px;letter-spacing:.03em;line-height:1;transition:color .3s}
+.t-time.run{color:var(--hinge)}.t-time.rest{color:var(--pull)}
+.t-sub{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-top:4px}
+.t-round{font-family:var(--fm);font-size:13px;color:var(--hinge);margin-top:3px;min-height:18px}
+.timer-btns{display:flex;align-items:center;justify-content:center;gap:14px;padding:0 14px 14px}
+.t-btn{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--border2);background:var(--card2);color:var(--ink2);font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.t-btn:active{transform:scale(.9)}
+.t-play{width:68px;height:68px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:26px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.t-play.pulse{animation:tpulse 1.5s ease-in-out infinite}
+@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(26,23,20,.2)}70%{box-shadow:0 0 0 14px rgba(26,23,20,0)}}
+.t-play:active{transform:scale(.93)}
+.drum-scroll{overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch}
+.drum-scroll::-webkit-scrollbar{display:none}
+/* SESSION BLOCKS */
+.sess-block{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.sess-block-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.sbt{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:12px;border:1px solid;flex-shrink:0}
+.sbt-sets,.sbt-free{color:var(--pull);border-color:var(--pull)}.sbt-circuit{color:var(--squat);border-color:var(--squat)}
+.sbt-complex{color:var(--ink2);border-color:var(--border2)}.sbt-emom{color:var(--hinge);border-color:var(--hinge)}
+.sbt-amrap{color:var(--push);border-color:var(--push)}.sbt-reps{color:var(--core);border-color:var(--core)}
+.sbt-intervals{color:var(--carry);border-color:var(--carry)}
+.sb-name{font-family:var(--fb);font-weight:600;font-size:14px;flex:1}
+.sb-del{width:28px;height:28px;border-radius:50%;border:1px solid rgba(196,88,58,.3);background:rgba(196,88,58,.06);color:var(--red);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
+.sb-del:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.ex-sub-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px 0;border-top:1px solid var(--border)}
+.hist-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--ink3);font-family:var(--fm);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.hist-btn:hover{border-color:var(--pull);color:var(--pull)}
+/* SETS TABLE */
+.sets-tbl{width:100%;border-collapse:collapse}
+.sets-tbl th{font-family:var(--fb);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:8px 6px 6px;text-align:center}
+.sets-tbl th:first-child{text-align:left;padding-left:14px;width:28px}
+.sets-tbl td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:center}
+.sets-tbl td:first-child{text-align:left;padding-left:14px}
+.sets-tbl tr:last-child td{border-bottom:none}
+.s-num{font-family:var(--fm);font-size:12px;color:var(--ink3)}
+.s-in{width:58px;padding:6px 4px;text-align:center;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--ink);font-family:var(--fm);font-size:14px;outline:none}
+.s-in:focus{border-color:var(--ink)}
+.s-done{width:34px;height:34px;border-radius:50%;border:2px solid var(--border2);background:var(--card2);color:var(--ink3);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;transition:all .2s}
+.s-done.ok{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.s-del{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--ink3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;transition:all .15s}
+.s-del:active{background:var(--red);border-color:var(--red);color:#fff}
+.add-set-row{display:flex;padding:10px 14px;border-top:1px solid var(--border)}
+.add-set-btn{height:30px;padding:0 12px;border-radius:20px;border:1.5px dashed var(--border2);background:none;color:var(--ink3);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.add-set-btn:hover{border-color:var(--ink);color:var(--ink)}
+/* HISTORY */
+.stats-band{display:flex;border-bottom:2px solid var(--ink);background:var(--bg2)}
+.sbc{flex:1;padding:14px 6px;text-align:center;border-right:1px solid var(--border)}
+.sbc:last-child{border-right:none}
+.sbc-v{font-family:var(--fd);font-size:32px;line-height:1}
+.hist-card{margin:0 18px 10px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.hist-dur{font-family:var(--fm);font-size:13px;color:var(--hinge);padding:4px 10px;border:1px solid rgba(196,88,58,.3);border-radius:12px;background:rgba(196,88,58,.06)}
+/* PROGRAM BUILDER */
+.pb-block{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--rsm);overflow:hidden;margin-bottom:8px}
+.pb-btype{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:3px 9px;border-radius:12px;border:1px solid;flex-shrink:0}
+.block-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btype-btn{padding:11px 10px;border-radius:var(--rsm);border:1.5px solid var(--border2);background:var(--card2);cursor:pointer;transition:all .15s;text-align:left}
+.btype-btn:hover{border-color:var(--ink)}.btype-btn:active{background:var(--card)}
+.bcfg-in{height:42px;padding:0 12px;background:var(--card2);border:1.5px solid var(--border);border-radius:var(--rsm);color:var(--ink);font-family:var(--fm);font-size:14px;outline:none;width:100%}
+.bcfg-in:focus{border-color:var(--ink)}
+.bcfg-ex-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rsm);margin-bottom:6px}
+.bcfg-ex-reps{width:48px;padding:4px;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:4px;font-family:var(--fm);font-size:13px;color:var(--ink);outline:none}
+/* empty */
+.empty{text-align:center;padding:40px 24px;color:var(--ink3)}
+/* toast */
+.toast-wrap{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:500;pointer-events:none}
+.toast-inner{background:var(--ink);color:var(--bg);font-family:var(--fb);font-size:13px;font-weight:600;padding:10px 22px;border-radius:30px;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* search */
+.search-wrap{position:relative;padding:0 18px 12px}
+.search-wrap input{width:100%;height:44px;padding:0 16px 0 42px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--ink)}
+.search-wrap input::placeholder{color:var(--ink3)}
+.search-ico{position:absolute;left:30px;top:50%;transform:translateY(-52%);font-size:18px;color:var(--ink3);pointer-events:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const EXERCISES = [
+  {id:'kb01',es:'Swing KB',en:'KB Swing',type:'kb',cat:['hinge','kb'],ico:'🔔',muscles:['Glúteos','Isquiotibiales','Core','Espalda baja'],desc_es:'El ejercicio fundamental. Empuje de cadera explosivo — no sentadilla. Base de todo el entrenamiento KB.',desc_en:'The fundamental exercise. Explosive hip hinge — not a squat. Foundation of all KB training.',cues_es:'• Bisagra de cadera, no sentadilla\n• Glúteos contraídos en la cima\n• Core braced en todo momento\n• La KB flota — no la levantás con los brazos\n• "Brazos no flojos" — protege la espalda',cues_en:'• Hip hinge, not a squat\n• Glutes squeezed at the top\n• Core braced throughout\n• Bell floats — arms are just hooks\n• "No limp arms" — protects your back'},
+  {id:'kb02',es:'Turkish Get-Up',en:'Turkish Get-Up',type:'kb',cat:['kb','core'],ico:'🔔',muscles:['Hombro','Core','Glúteos','Estabilizadores'],desc_es:'El rey de la estabilidad. Movimiento suelo-a-parado con KB.',desc_en:'King of stability. Ground-to-stand movement with KB.',cues_es:'• Ojo siempre en la KB\n• Codo bloqueado en todo momento\n• Movimiento lento y deliberado\n• Cada paso es un ejercicio en sí mismo',cues_en:'• Eyes always on the bell\n• Loaded elbow always locked\n• Slow deliberate movement\n• Each step is its own exercise'},
+  {id:'kb03',es:'Clean KB',en:'KB Clean',type:'kb',cat:['hinge','kb'],ico:'🔔',muscles:['Glúteos','Isquiotibiales','Hombro','Antebrazo'],desc_es:'Swing que termina en posición rack.',desc_en:'Swing ending in rack position.',cues_es:'• Misma bisagra que el swing\n• Rota el antebrazo llegando al rack\n• La KB traza un arco ajustado al cuerpo\n• Muñeca neutral en el rack',cues_en:'• Same hinge as swing\n• Rotate forearm to rack\n• Tight arc to body\n• Neutral wrist in rack'},
+  {id:'kb04',es:'Press KB',en:'KB Press',type:'kb',cat:['push','kb'],ico:'🔔',muscles:['Hombro','Tríceps','Core'],desc_es:'El rey para mayores de 40 (Dan John). Superior para músculo y salud del hombro.',desc_en:'King for 40+ (Dan John). Superior for muscle and shoulder health.',cues_es:'• Rack limpio antes de presionar\n• Aprieta el glúteo del lado cargado\n• No dejes que el codo se abra\n• Bloqueo total arriba — pausa de 1 seg',cues_en:'• Clean rack before pressing\n• Squeeze loaded side glute\n• Don\'t let elbow flare\n• Full lockout — 1 sec pause'},
+  {id:'kb05',es:'Snatch KB',en:'KB Snatch',type:'kb',cat:['hinge','kb'],ico:'🔔',muscles:['Full body'],desc_es:'El rey de los ejercicios KB. Solo cuando swing y clean son sólidos.',desc_en:'King of KB exercises. Only when swing and clean are solid.',cues_es:'• Bisagra potente = snatch potente\n• Perforá el techo con el puño\n• KB viaja pegada al cuerpo',cues_en:'• Powerful hinge = powerful snatch\n• Punch through ceiling\n• Bell travels close to body'},
+  {id:'kb06',es:'Goblet Squat',en:'Goblet Squat',type:'kb',cat:['squat','kb'],ico:'🔔',muscles:['Cuádriceps','Glúteos','Core'],desc_es:'Sentadilla con KB al pecho. Base del Humane Burpee.',desc_en:'Squat holding KB at chest. Humane Burpee foundation.',cues_es:'• Codos adentro de las rodillas\n• Pecho alto todo el tiempo\n• Talones en el suelo',cues_en:'• Elbows inside knees\n• Chest tall throughout\n• Heels grounded'},
+  {id:'kb07',es:'Front Squat Doble KB',en:'Double KB Front Squat',type:'kb',cat:['squat','kb'],ico:'🔔',muscles:['Cuádriceps','Glúteos','Core','Espalda alta'],desc_es:'Estándar de oro para fuerza de piernas y core.',desc_en:'Gold standard for leg and core strength.',cues_es:'• Ambas KBs en rack limpio\n• Codos levantados en toda la bajada\n• Columna neutral',cues_en:'• Both KBs in clean rack\n• Elbows up throughout\n• Neutral spine'},
+  {id:'kb08',es:'Clean & Press KB',en:'KB Clean & Press',type:'kb',cat:['push','hinge','kb'],ico:'🔔',muscles:['Full body','Hombro','Glúteos'],desc_es:'El rey para 40+. Clean + press en flujo continuo.',desc_en:'King for 40+. Clean + press in continuous flow.',cues_es:'• Clean limpio antes de cada press\n• Pausa en el rack\n• Aprieta el glúteo del lado cargado\n• Bajada lenta y controlada',cues_en:'• Clean before each press\n• Pause in rack\n• Squeeze loaded glute\n• Slow controlled descent'},
+  {id:'kb09',es:'Carry Maletín',en:'Suitcase Carry',type:'kb',cat:['carry','kb'],ico:'🔔',muscles:['Core lateral','Trapecio','Glúteos'],desc_es:'Caminar con una KB. Desafío anti-flexión lateral.',desc_en:'Walk with one KB. Anti-lateral flexion challenge.',cues_es:'• Hombros nivelados\n• No ladearse hacia el lado cargado\n• Core braced todo el tiempo',cues_en:'• Level shoulders\n• Don\'t lean to loaded side\n• Core braced throughout'},
+  {id:'kb10',es:'Snow Angels KB',en:'KB Snow Angels',type:'kb',cat:['push','kb'],ico:'🔔',muscles:['Pecho','Hombro anterior','Tríceps'],desc_es:'Desarrollo de pecho — zona olvidada en KB.',desc_en:'Chest development — overlooked in KB training.',cues_es:'• Tumbado boca arriba\n• KBs en el suelo a los costados\n• Arco amplio con brazos casi rectos',cues_en:'• Lie on your back\n• KBs on floor at sides\n• Wide arc with nearly straight arms'},
+  {id:'kb11',es:'Halo KB',en:'KB Halo',type:'kb',cat:['kb','core'],ico:'🔔',muscles:['Hombro','Core'],desc_es:'Círculo alrededor de la cabeza. Calentamiento.',desc_en:'Circle around head. Warmup drill.',cues_es:'• Movimiento lento y controlado\n• No dejes que las costillas se abran\n• Alternás dirección cada serie',cues_en:'• Slow controlled movement\n• Don\'t let ribs flare\n• Alternate direction each set'},
+  {id:'kb12',es:'Swing a un brazo',en:'One-Arm Swing',type:'kb',cat:['hinge','kb'],ico:'🔔',muscles:['Glúteos','Core rotacional'],desc_es:'Variante unilateral del swing.',desc_en:'Unilateral swing variation.',cues_es:'• Misma mecánica que el swing\n• Anti-rotación activa\n• Transición fluida de mano',cues_en:'• Same swing mechanics\n• Active anti-rotation\n• Smooth hand transfer'},
+  {id:'bw01',es:'Dominadas',en:'Pull-ups',type:'bw',cat:['pull','bw'],ico:'🏋️',muscles:['Espalda','Bíceps','Core'],desc_es:'El rey del tirón.',desc_en:'King of pulling.',cues_es:'• Escápulas deprimidas antes de iniciar\n• Pecho al bar, no el mentón\n• Bajada controlada 3-4 seg',cues_en:'• Depress scapulae first\n• Chest to bar, not chin\n• Controlled descent 3-4 sec'},
+  {id:'bw02',es:'Fondos',en:'Dips',type:'bw',cat:['push','bw'],ico:'🏋️',muscles:['Pecho','Tríceps'],desc_es:'Empuje en paralelas.',desc_en:'Parallel bar push.',cues_es:'• Escápulas atrás y abajo\n• Contracción total arriba',cues_en:'• Scapulae back and down\n• Full contraction at top'},
+  {id:'bw03',es:'Flexiones',en:'Push-ups',type:'bw',cat:['push','bw'],ico:'🏋️',muscles:['Pecho','Tríceps','Core'],desc_es:'La base. Componente del Humane Burpee.',desc_en:'The foundation. Humane Burpee component.',cues_es:'• Core apretado, cuerpo recto\n• Codos a 45°\n• Pecho toca el suelo',cues_en:'• Tight core, straight body\n• Elbows at 45°\n• Chest touches floor'},
+  {id:'bw04',es:'Sent. Búlgara',en:'Bulgarian Split Squat',type:'bw',cat:['squat','bw'],ico:'🏋️',muscles:['Cuádriceps','Glúteos'],desc_es:'Sentadilla unilateral con pie trasero elevado.',desc_en:'Unilateral squat rear foot elevated.',cues_es:'• Rodilla delantera sobre el pie\n• Rodilla trasera casi toca el suelo',cues_en:'• Front knee over foot\n• Rear knee almost touches floor'},
+  {id:'bw05',es:'Plancha',en:'Plank',type:'bw',cat:['core','bw'],ico:'🏋️',muscles:['Core','Hombro'],desc_es:'Isométrico fundamental.',desc_en:'Fundamental isometric.',cues_es:'• Cuerpo recto de cabeza a talones\n• No dejes caer la cadera',cues_en:'• Straight body head to heels\n• Don\'t let hips sag'},
+  {id:'bw06',es:'Remo Australiano',en:'Australian Row',type:'bw',cat:['pull','bw'],ico:'🏋️',muscles:['Espalda','Bíceps'],desc_es:'Remo con barra baja. Regresión de dominadas.',desc_en:'Low bar row. Pull-up regression.',cues_es:'• Cuerpo recto y rígido\n• Pecho toca la barra',cues_en:'• Straight rigid body\n• Chest touches bar'},
+  {id:'bw07',es:'Pistol Squat',en:'Pistol Squat',type:'bw',cat:['squat','bw'],ico:'🏋️',muscles:['Cuádriceps','Glúteos','Equilibrio'],desc_es:'Sentadilla completa a una pierna.',desc_en:'Full single-leg squat.',cues_es:'• Pierna libre hacia adelante\n• Talón en el suelo\n• Columna neutral',cues_en:'• Free leg forward\n• Heel grounded\n• Neutral spine'},
+  {id:'bw08',es:'Dragon Flag',en:'Dragon Flag',type:'bw',cat:['core','bw'],ico:'🏋️',muscles:['Core completo'],desc_es:'Core avanzado en banco.',desc_en:'Advanced bench core.',cues_es:'• Agarra el banco firmemente\n• Cuerpo recto como tabla\n• Bajada lenta 3-5 seg',cues_en:'• Grip bench firmly\n• Body straight as board\n• Slow descent 3-5 sec'},
+];
+
+const COMPLEXES_BUILTIN = [
+  {id:'c01',es:'Armor Building Complex',en:'Armor Building Complex',author:'Geoff Neupert',
+   desc_es:'2 Cleans + 1 Press + 3 Front Squats. Estándar de oro para músculo y resiliencia. Doble KB.',
+   desc_en:'2 Cleans + 1 Press + 3 Front Squats. Gold standard for muscle and resilience. Double KB.',
+   steps:[{exId:'kb03',reps:2},{exId:'kb04',reps:1},{exId:'kb07',reps:3}],rounds:5,rest:120,
+   note_es:'Mismo peso en ambas KBs.',note_en:'Same weight both KBs.'},
+  {id:'c02',es:'Humane Burpee',en:'Humane Burpee',author:'Dan John',
+   desc_es:'Swing + Goblet Squat + Flexiones. Acondicionamiento sin el castigo del burpee.',
+   desc_en:'Swing + Goblet + Push-ups. Conditioning without burpee punishment.',
+   steps:[{exId:'kb01',reps:5},{exId:'kb06',reps:5},{exId:'bw03',reps:5}],rounds:10,rest:60,
+   note_es:'15-20 min. Ajustá reps según tu nivel.',note_en:'15-20 min. Adjust reps to your level.'},
+  {id:'c03',es:'Bellplex Hercules',en:'Bellplex Hercules',author:'Pat Damiano',
+   desc_es:'Clean + Press + Snatch en flujo continuo.',desc_en:'Clean + Press + Snatch in continuous flow.',
+   steps:[{exId:'kb03',reps:1},{exId:'kb04',reps:1},{exId:'kb05',reps:1}],rounds:5,rest:90,
+   note_es:'Completá un lado antes de cambiar.',note_en:'Complete one side before switching.'},
+  {id:'c04',es:'Bellplex Sisyphus',en:'Bellplex Sisyphus',author:'Pat Damiano',
+   desc_es:'Swing + Clean + Press + Squat. Alto volumen con una sola KB.',
+   desc_en:'Swing + Clean + Press + Squat. High volume with one KB.',
+   steps:[{exId:'kb12',reps:5},{exId:'kb03',reps:1},{exId:'kb04',reps:1},{exId:'kb06',reps:3}],rounds:4,rest:120,
+   note_es:'Una KB, un lado a la vez.',note_en:'One KB, one side at a time.'},
+  {id:'c05',es:'Clean & Press Ladder',en:'Clean & Press Ladder',author:'Pavel Tsatsouline',
+   desc_es:'Escalera 1-2-3 de C&P + Pull-up. Clásico del ROP.',desc_en:'1-2-3 ladder of C&P + Pull-up. ROP classic.',
+   steps:[{exId:'kb08',reps:'1-2-3'},{exId:'bw01',reps:'1-2-3'}],rounds:3,rest:60,
+   note_es:'1 rep, descanso, 2, descanso, 3 = 1 escalera.',note_en:'1 rep, rest, 2, rest, 3 = 1 ladder.'},
+];
+
+const PROGRAMS_BUILTIN = [
+  {id:'p01',es:'Simple & Sinister',en:'Simple & Sinister',ico:'⚡',builtin:true,
+   desc_es:'Pavel. Swings y TGUs diarios. Base de acero.',desc_en:'Pavel. Daily swings and TGUs. Iron foundation.',
+   blocks:[{id:'b1',type:'sets',name:'10×10 Swings',cfg:{sets:10,reps:10,rest:60},exIds:['kb01']},
+           {id:'b2',type:'sets',name:'5×1 TGU',cfg:{sets:5,reps:1,rest:90},exIds:['kb02']}]},
+  {id:'p02',es:'Easy Strength',en:'Easy Strength',ico:'🧠',builtin:true,
+   desc_es:'Dan John. Bajo volumen, alta frecuencia.',desc_en:'Dan John. Low volume, high frequency.',
+   blocks:[{id:'b1',type:'sets',name:'C&P',cfg:{sets:3,reps:5,rest:90},exIds:['kb08']},
+           {id:'b2',type:'sets',name:'Swings',cfg:{sets:3,reps:10,rest:60},exIds:['kb01']},
+           {id:'b3',type:'sets',name:'Pull-ups',cfg:{sets:3,reps:5,rest:90},exIds:['bw01']}]},
+  {id:'p03',es:'ABC Program',en:'ABC Program',ico:'🛡️',builtin:true,
+   desc_es:'Neupert. El Armor Building Complex como programa.',desc_en:'Neupert. Armor Building Complex as program.',
+   blocks:[{id:'b1',type:'complex',name:'ABC ×5',cfg:{rounds:5,rest:120},complexId:'c01'}]},
+  {id:'p04',es:'KB + Calistenia',en:'KB + Calisthenics',ico:'💪',builtin:true,
+   desc_es:'Push/pull KB y calistenia.',desc_en:'KB push/pull and calisthenics.',
+   blocks:[{id:'b1',type:'sets',name:'Press KB',cfg:{sets:4,reps:5,rest:90},exIds:['kb04']},
+           {id:'b2',type:'sets',name:'Pull-ups',cfg:{sets:4,reps:8,rest:90},exIds:['bw01']},
+           {id:'b3',type:'sets',name:'Dips',cfg:{sets:3,reps:10,rest:60},exIds:['bw02']}]},
+];
+
+const QUOTES = [
+  {es:'"Lo simple siempre funciona mejor que lo complejo."',en:'"Simple always works better than complex."',a:'Dan John'},
+  {es:'"No entrenes al fallo — es el maestro más caro."',en:'"Don\'t train to failure — most expensive teacher."',a:'Geoff Neupert'},
+  {es:'"La KB es el gimnasio perfecto para el adulto ocupado."',en:'"The kettlebell is the perfect gym for the busy adult."',a:'Pavel Tsatsouline'},
+  {es:'"La constancia supera a la intensidad. Siempre."',en:'"Consistency beats intensity. Always."',a:'Dan John'},
+  {es:'"Cuando la velocidad baja, la serie terminó."',en:'"When speed drops, the set is over."',a:'Geoff Neupert'},
+  {es:'"El swing es el rey. Todo lo demás es el corte."',en:'"The swing is king. Everything else is the cut."',a:'Dan John'},
+  {es:'"La mejor sesión es la que podés repetir mañana."',en:'"The best session is the one you can repeat tomorrow."',a:'Dan John'},
+  {es:'"Fuerza simple. Vida simple."',en:'"Simple strength. Simple life."',a:'Pavel Tsatsouline'},
+];
+
+const BLOCK_TYPES = [
+  {type:'sets',    ico:'📦', es:'Series',       en:'Sets',        sub_es:'X series × Y reps', sub_en:'X sets × Y reps'},
+  {type:'circuit', ico:'🔄', es:'Circuito',     en:'Circuit',     sub_es:'Múltiples ejercicios', sub_en:'Multiple exercises'},
+  {type:'emom',    ico:'⏱', es:'EMOM',         en:'EMOM',        sub_es:'Cada minuto', sub_en:'Every minute'},
+  {type:'amrap',   ico:'🔥', es:'AMRAP',        en:'AMRAP',       sub_es:'Máx rondas', sub_en:'Max rounds'},
+  {type:'reps',    ico:'🎯', es:'Reps totales', en:'Total Reps',  sub_es:'Lográ X reps', sub_en:'Achieve X reps'},
+  {type:'intervals',ico:'⚡',es:'Intervalos',   en:'Intervals',   sub_es:'Trabajo / descanso', sub_en:'Work / rest'},
+];
+
+const CAT_ORDER = ['hinge','push','pull','squat','core','carry'];
+const CAT_COLORS = {hinge:'#C4583A',push:'#C49A3A',pull:'#3A6EC4',squat:'#3AA46E',core:'#8A3AC4',carry:'#C43A8A'};
+const ENERGY_ICO = {fire:'🔥',good:'💪',ok:'😐',tired:'😴'};
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+const getPrimCat = ex => { for (const c of CAT_ORDER) if (ex.cat.includes(c)) return c; return 'kb'; };
+const exName = (ex, lang) => lang === 'en' ? ex.en : ex.es;
+const exById = id => EXERCISES.find(e => e.id === id);
+const cxById = (id, custom=[]) => [...COMPLEXES_BUILTIN, ...custom].find(c => c.id === id);
+const pad = n => n < 10 ? '0'+n : ''+n;
+const fmtTime = s => pad(Math.floor(s/60))+':'+pad(s%60);
+const uid = () => 'id'+Date.now()+Math.random().toString(36).slice(2,6);
+const fmtDate = (ds, lang) => {
+  const d = new Date(ds+'T12:00:00');
+  const wEs=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'], wEn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mEs=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mEn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return lang==='en' ? `${wEn[d.getDay()]} ${d.getDate()} ${mEn[d.getMonth()]}` : `${wEs[d.getDay()]} ${d.getDate()} ${mEs[d.getMonth()]}`;
+};
+const saveLS = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const loadLS = (k, fb) => { try { const v=localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch(e){ return fb; } };
+
+const SAMPLE_HIST = [
+  {id:'h1',date:'2026-03-30',program:'Simple & Sinister',duration:35,energy:'fire',notes:'PR en TGU 24kg 💪',
+   blocks:[{type:'sets',name:'Swings',exercises:[{exId:'kb01',name_es:'Swing KB',name_en:'KB Swing',sets:[{kg:32,reps:10},{kg:32,reps:10},{kg:32,reps:10},{kg:32,reps:10},{kg:32,reps:10}]}]},{type:'sets',name:'TGU',exercises:[{exId:'kb02',name_es:'Turkish Get-Up',name_en:'Turkish Get-Up',sets:[{kg:24,reps:1},{kg:24,reps:1},{kg:24,reps:1},{kg:24,reps:1},{kg:24,reps:1}]}]}]},
+  {id:'h2',date:'2026-03-28',program:'Humane Burpee',duration:22,energy:'ok',notes:'Cansado pero lo terminé.',
+   blocks:[{type:'complex',name:'Humane Burpee',exercises:[{exId:'kb01',name_es:'Swing KB',name_en:'KB Swing',sets:[{kg:24,reps:5},{kg:24,reps:5},{kg:24,reps:5}]},{exId:'kb06',name_es:'Goblet Squat',name_en:'Goblet Squat',sets:[{kg:24,reps:5},{kg:24,reps:5},{kg:24,reps:5}]},{exId:'bw03',name_es:'Flexiones',name_en:'Push-ups',sets:[{kg:0,reps:5},{kg:0,reps:5},{kg:0,reps:5}]}]}]},
+  {id:'h3',date:'2026-03-26',program:'Easy Strength',duration:40,energy:'good',notes:'',
+   blocks:[{type:'sets',name:'C&P',exercises:[{exId:'kb08',name_es:'Clean & Press KB',name_en:'KB Clean & Press',sets:[{kg:20,reps:5},{kg:20,reps:5},{kg:20,reps:5}]}]},{type:'sets',name:'Pull-ups',exercises:[{exId:'bw01',name_es:'Dominadas',name_en:'Pull-ups',sets:[{kg:0,reps:6},{kg:0,reps:6},{kg:0,reps:5}]}]}]},
+];
+
+// ─── SHEET URL ────────────────────────────────────────────────────────────────
+// ─── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+const FB_CONFIG = {
+  apiKey:      "AIzaSyAS-j8hsPltous3dwHxrlVHO__fMQBGJeE",
+  authDomain:  "kblog-2f180.firebaseapp.com",
+  projectId:   "kblog-2f180",
+  storageBucket: "kblog-2f180.firebasestorage.app",
+  messagingSenderId: "85883627985",
+  appId:       "1:85883627985:web:56dd913b9b6fb10abb18f0",
+};
+
+// Firebase SDK loaded via script tags
+let db = null;
+let auth = null;
+
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    db   = firebase.firestore();
+    auth = firebase.auth();
+    return true;
+  } catch(e) { return false; }
+}
+
+// Auth helpers
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  return auth.signInWithPopup(provider);
+}
+function signOut() { return auth.signOut(); }
+function onAuthChange(cb) { return auth.onAuthStateChanged(cb); }
+
+// Firestore helpers — all scoped to /users/{uid}/
+function userCol(uid, col) { return db.collection('users').doc(uid).collection(col); }
+async function fbSet(uid, col, id, data)  { if(!db||!uid) return; await userCol(uid,col).doc(id).set(data); }
+async function fbDel(uid, col, id)        { if(!db||!uid) return; await userCol(uid,col).doc(id).delete(); }
+async function fbGetAll(uid, col)         { if(!db||!uid) return []; const s=await userCol(uid,col).get(); return s.docs.map(d=>({id:d.id,...d.data()})); }
+
+
+// ─── COMPONENTS ──────────────────────────────────────────────────────────────
+
+// Toast
+function Toast({ msg }) {
+  if (!msg) return null;
+  return <div className="toast-wrap"><div className="toast-inner">{msg}</div></div>;
+}
+
+// Modal overlay wrapper
+function Modal({ onClose, children, maxH = '92vh' }) {
+  const innerRef = useRef(null);
+  const startY = useRef(0);
+  const dragging = useRef(false);
+
+  const onTouchStart = e => {
+    startY.current = e.touches[0].clientY;
+    dragging.current = true;
+    if (innerRef.current) innerRef.current.style.transition = 'none';
+  };
+  const onTouchMove = e => {
+    if (!dragging.current || !innerRef.current) return;
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy > 0) innerRef.current.style.transform = `translateY(${dy}px)`;
+  };
+  const onTouchEnd = e => {
+    if (!dragging.current || !innerRef.current) return;
+    const dy = e.changedTouches[0].clientY - startY.current;
+    innerRef.current.style.transition = '';
+    if (dy > 100) {
+      innerRef.current.style.transform = `translateY(100%)`;
+      setTimeout(onClose, 220);
+    } else {
+      innerRef.current.style.transform = '';
+    }
+    dragging.current = false;
+  };
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" ref={innerRef} style={{ maxHeight: maxH }}>
+        <div
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ cursor:'grab', touchAction:'none' }}
+        >
+          <div style={{ padding:'12px 0 0', display:'flex', justifyContent:'center' }}>
+            <div style={{ width:36, height:3, borderRadius:2, background:'var(--border2)' }} />
+          </div>
+          {/* Render only the first child (modal-hdr) as part of drag zone */}
+          {React.Children.toArray(children)[0]}
+        </div>
+        {/* Rest of children */}
+        {React.Children.toArray(children).slice(1)}
+      </div>
+    </div>
+  );
+}
+
+// ─── EXERCISE DETAIL MODAL ───────────────────────────────────────────────────
+function ExDetailModal({ ex, lang, sessionActive, onAdd, onClose }) {
+  const pc = getPrimCat(ex);
+  const color = CAT_COLORS[pc] || '#888';
+  return (
+    <Modal onClose={onClose}>
+      <div className="modal-hdr">
+        <div style={{ fontSize: 26, marginBottom: 4 }}>{ex.ico}</div>
+        <div className="modal-title">{exName(ex, lang)}</div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+          <span className="tag" style={{ color: ex.type==='kb'?'var(--ink)':'var(--ink2)', borderColor: 'var(--border2)' }}>{ex.type.toUpperCase()}</span>
+          <span className="tag" style={{ color, borderColor: color }}>{pc}</span>
+        </div>
+      </div>
+      <div className="modal-body">
+        <p style={{ fontSize: 13, color: 'var(--ink2)', lineHeight: 1.7 }}>{lang==='es' ? ex.desc_es : ex.desc_en}</p>
+        <div>
+          <div className="sec-lbl" style={{ marginBottom: 6 }}>{lang==='es'?'Músculos':'Muscles'}</div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {ex.muscles.map(m => <span key={m} className="tag" style={{ color:'var(--ink2)', borderColor:'var(--border2)' }}>{m}</span>)}
+          </div>
+        </div>
+        <div>
+          <div className="sec-lbl" style={{ marginBottom: 6 }}>{lang==='es'?'Cues técnicos':'Tech cues'}</div>
+          <div style={{ fontSize: 13, color: 'var(--ink2)', lineHeight: 1.8, whiteSpace: 'pre-line' }}>{lang==='es' ? ex.cues_es : ex.cues_en}</div>
+        </div>
+        {sessionActive && (
+          <button className="btn btn-ink" style={{ width: '100%' }} onClick={onAdd}>
+            {lang==='es' ? '+ Agregar a sesión' : '+ Add to session'}
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── EXERCISE PICKER ─────────────────────────────────────────────────────────
+function ExPicker({ lang, title, onPick, onClose }) {
+  const [search, setSearch] = useState('');
+  const filtered = EXERCISES.filter(e => !search || exName(e, lang).toLowerCase().includes(search.toLowerCase()));
+  return (
+    <Modal onClose={onClose} maxH="82vh">
+      <div className="modal-hdr">
+        <div className="modal-title">{title || (lang==='es'?'Agregar ejercicio':'Add exercise')}</div>
+      </div>
+      <div style={{ padding: '10px 14px 6px' }}>
+        <div className="search-wrap" style={{ padding: 0 }}>
+          <span className="search-ico">⌕</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={lang==='es'?'Buscar...':'Search...'} style={{ paddingLeft: 36 }} />
+        </div>
+      </div>
+      <div style={{ overflowY: 'auto', maxHeight: '55vh', paddingBottom: 24 }}>
+        {filtered.map(ex => {
+          const pc = getPrimCat(ex);
+          const color = CAT_COLORS[pc] || 'var(--ink3)';
+          return (
+            <div key={ex.id} className="picker-row" style={{ borderLeft: `3px solid ${color}` }} onClick={() => onPick(ex.id)}>
+              <span style={{ fontSize: 20 }}>{ex.ico}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{exName(ex, lang)}</div>
+                <div style={{ marginTop: 2 }}>
+                  <span className="tag" style={{ color, borderColor: color, fontSize: 10 }}>{pc}</span>
+                </div>
+              </div>
+              <span style={{ color: 'var(--ink3)', fontSize: 18 }}>+</span>
+            </div>
+          );
+        })}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── EXERCISE HISTORY MODAL ──────────────────────────────────────────────────
+function ExHistModal({ exId, lang, history, onClose }) {
+  const ex = exById(exId);
+  if (!ex) return null;
+  const records = [];
+  history.forEach(sess => {
+    sess.blocks.forEach(blk => {
+      blk.exercises.forEach(e => {
+        if (e.exId === exId) records.push({ date: sess.date, sets: e.sets });
+      });
+    });
+  });
+  const allKgs = records.flatMap(r => r.sets.map(s => s.kg).filter(k => k > 0));
+  const maxKg = allKgs.length ? Math.max(...allKgs) : 0;
+  const lastKgs = records[0]?.sets.map(s => s.kg).filter(k => k>0) || [];
+  const lastMax = lastKgs.length ? Math.max(...lastKgs) : 0;
+  return (
+    <Modal onClose={onClose} maxH="80vh">
+      <div className="modal-hdr">
+        <div style={{ fontFamily: 'var(--fm)', fontSize: 10, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>
+          {lang==='es'?'Historial de':'History for'}
+        </div>
+        <div className="modal-title">{exName(ex, lang)}</div>
+      </div>
+      <div style={{ padding: '14px 20px 36px' }}>
+        {records.length === 0 ? (
+          <div className="empty">
+            <div style={{ fontSize: 36, opacity: .3, marginBottom: 10 }}>📊</div>
+            <div style={{ fontFamily: 'var(--fd)', fontSize: 18, color: 'var(--ink3)' }}>{lang==='es'?'Sin registros aún':'No records yet'}</div>
+            <div style={{ fontSize: 12, marginTop: 6, color: 'var(--ink3)' }}>{lang==='es'?'Este ejercicio no aparece en tu historial todavía.':'This exercise hasn\'t been logged yet.'}</div>
+          </div>
+        ) : (
+          <>
+            {allKgs.length > 0 && (
+              <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 'var(--r)', overflow: 'hidden', marginBottom: 16, background: 'var(--card2)' }}>
+                {[
+                  { v: records.length, l: lang==='es'?'Sesiones':'Sessions' },
+                  { v: maxKg+'kg', l: 'Max kg' },
+                  { v: lastMax+'kg', l: lang==='es'?'Última':'Last' },
+                ].map((s, i) => (
+                  <div key={i} style={{ flex: 1, padding: '12px 8px', textAlign: 'center', borderRight: i<2 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{ fontFamily: 'var(--fd)', fontSize: 28, color: i===1?'var(--hinge)':'var(--ink)', lineHeight: 1 }}>{s.v}</div>
+                    <div style={{ fontFamily: 'var(--fm)', fontSize: 9, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 2 }}>{s.l}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {records.slice(0,8).map((rec, i) => {
+              const bw = rec.sets.every(s => s.kg === 0);
+              const best = Math.max(...rec.sets.map(s=>s.kg));
+              const vol = rec.sets.reduce((a,s) => a+s.kg*s.reps, 0);
+              const setsStr = rec.sets.map(s => `${s.kg>0?s.kg+'kg':'BW'}×${s.reps}`).join(', ');
+              return (
+                <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontFamily: 'var(--fm)', fontSize: 11, color: 'var(--ink3)' }}>{fmtDate(rec.date, lang)}</span>
+                    {!bw && best>0 && <span style={{ fontFamily: 'var(--fm)', fontSize: 12, color: 'var(--hinge)' }}>{best} kg</span>}
+                  </div>
+                  <div style={{ fontFamily: 'var(--fm)', fontSize: 12, color: 'var(--ink2)' }}>{setsStr}</div>
+                  {vol>0 && <div style={{ fontFamily: 'var(--fm)', fontSize: 11, color: 'var(--ink3)', marginTop: 2 }}>Vol: {vol} kg</div>}
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── SETS LOGGER (per exercise within a session block) ───────────────────────
+function SetsLogger({ exId, lang, history, blockId, onRemoveEx, defaultSets=3, defaultReps=5, defaultKg, onRegister }) {
+  const ex = exById(exId);
+  if (!ex) return null;
+  const isBW = ex.type === 'bw';
+  const initKg = defaultKg !== undefined ? defaultKg : (isBW ? 0 : 16);
+  const [sets, setSets] = useState(() =>
+    Array.from({ length: defaultSets }, () => ({ kg: initKg, reps: defaultReps, done: false }))
+  );
+  const setsRef = useRef(sets);
+  useEffect(() => { setsRef.current = sets; }, [sets]);
+  useEffect(() => {
+    if (onRegister) onRegister(exId, () => setsRef.current);
+    return () => { if (onRegister) onRegister(exId, null); };
+  }, [exId, onRegister]);
+  const [showHist, setShowHist] = useState(false);
+  const addSet = () => setSets(s => [...s, { kg: s[s.length-1]?.kg ?? initKg, reps: s[s.length-1]?.reps ?? defaultReps, done: false }]);
+  const removeSet = i => setSets(s => s.filter((_,idx)=>idx!==i));
+  const updateSet = (i, field, val) => setSets(s => s.map((r,idx) => idx===i ? {...r,[field]:val} : r));
+  const toggleDone = i => setSets(s => s.map((r,idx) => idx===i ? {...r,done:!r.done} : r));
+  const selAll = e => e.target.select();
+  return (
+    <>
+      <div className="ex-sub-hdr">
+        <span style={{ fontSize: 16 }}>{ex.ico}</span>
+        <span style={{ fontFamily: 'var(--fb)', fontWeight: 600, fontSize: 14, flex: 1 }}>{exName(ex, lang)}</span>
+        <button className="hist-btn" onClick={() => setShowHist(true)}>📈 {lang==='es'?'Historial':'History'}</button>
+        <div className="s-del" style={{ margin: '0 0 0 6px' }} onClick={() => onRemoveEx(exId)}>✕</div>
+      </div>
+      <table className="sets-tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{isBW ? 'BW/+Kg' : 'Kg'}</th>
+            <th>Reps</th>
+            <th>✓</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {sets.map((s, i) => (
+            <tr key={i}>
+              <td><span className="s-num">{i+1}</span></td>
+              <td>
+                {isBW ? (
+                  <select className="s-in" value={s.kg} onChange={e => updateSet(i,'kg',parseFloat(e.target.value))}>
+                    {[0,4,8,12,16,20,24,32].map(v => <option key={v} value={v}>{v===0?'BW':'+'+v}</option>)}
+                  </select>
+                ) : (
+                  <input type="number" className="s-in" value={s.kg} min={0} step={0.5}
+                    onFocus={selAll}
+                    onChange={e => updateSet(i,'kg',parseFloat(e.target.value)||0)} />
+                )}
+              </td>
+              <td><input type="number" className="s-in" value={s.reps} min={0}
+                onFocus={selAll}
+                onChange={e => updateSet(i,'reps',parseInt(e.target.value)||0)} /></td>
+              <td><div className={`s-done${s.done?' ok':''}`} onClick={() => toggleDone(i)}>{s.done?'✓':'○'}</div></td>
+              <td><div className="s-del" onClick={() => removeSet(i)}>✕</div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="add-set-row">
+        <button className="add-set-btn" onClick={addSet}>+ {lang==='es'?'Serie':'Set'}</button>
+      </div>
+      {showHist && <ExHistModal exId={exId} lang={lang} history={history} onClose={() => setShowHist(false)} />}
+    </>
+  );
+}
+
+// ─── SESSION BLOCK ────────────────────────────────────────────────────────────
+function SessionBlock({ block, lang, history, customComplexes, onRemove, onRegisterBlock }) {
+  const isComplex = block.type === 'complex';
+  const initSteps = () => {
+    if (block.steps) return block.steps;
+    if (block.exIds) return block.exIds.map(id => ({ exId: id, reps: block.cfg?.reps || 5 }));
+    return [];
+  };
+  const [steps, setSteps] = useState(initSteps);
+  const [rounds, setRounds] = useState(block.cfg?.rounds || 3);
+  const [stepKgs, setStepKgs] = useState(() => {  // kg per step index
+    const init = {};
+    (block.steps || []).forEach((st, i) => {
+      const ex = exById(st.exId);
+      init[i] = ex?.type === 'bw' ? 0 : (block.cfg?.kg || 16);
+    });
+    return init;
+  });
+  const [showPicker, setShowPicker] = useState(false);
+  const addEx = id => {
+    const ex = exById(id);
+    const newIdx = steps.length;
+    setSteps(s => [...s, { exId: id, reps: 5 }]);
+    setStepKgs(k => ({...k, [newIdx]: ex?.type==='bw'?0:16}));
+    setShowPicker(false);
+  };
+  const removeStep = idx => {
+    setSteps(s => s.filter((_,i) => i !== idx));
+    setStepKgs(k => {
+      const next = {};
+      Object.keys(k).forEach(i => { if(parseInt(i) < idx) next[i]=k[i]; else if(parseInt(i) > idx) next[parseInt(i)-1]=k[i]; });
+      return next;
+    });
+  };
+  const updateStepReps = (idx, val) => setSteps(s => s.map((x,i) => i===idx ? {...x,reps:val} : x));
+  const updateStepKg  = (idx, val) => setStepKgs(k => ({...k,[idx]:val}));
+
+  const [exIds, setExIds] = useState(!isComplex ? (block.exIds || []) : []);
+  const addFreeEx = id => { setExIds(ids => [...ids, id]); setShowPicker(false); };
+  const removeFreeEx = id => setExIds(ids => ids.filter(i => i !== id));
+
+  // Registry: map exId -> getter function provided by each SetsLogger
+  const settersRegistry = useRef({});
+  const registerSetter = useCallback((exId, getter) => {
+    if (getter) settersRegistry.current[exId] = getter;
+    else delete settersRegistry.current[exId];
+  }, []);
+
+  // Expose a getExercises function to parent so it can harvest on save
+  useEffect(() => {
+    if (!onRegisterBlock) return;
+    const getExercises = () => {
+      if (isComplex) {
+        return steps.map((st, i) => {
+          const e = exById(st.exId);
+          return {
+            exId: st.exId,
+            name_es: e?.es || '?',
+            name_en: e?.en || '?',
+            sets: Array.from({ length: rounds }, () => ({ kg: stepKgs[i] ?? 0, reps: st.reps })),
+          };
+        });
+      }
+      // For normal blocks: read from each SetsLogger's registry
+      return exIds.map(id => {
+        const e = exById(id);
+        const getter = settersRegistry.current[id];
+        const sets = getter ? getter() : [{ kg: 0, reps: 0 }];
+        return { exId: id, name_es: e?.es || '?', name_en: e?.en || '?', sets };
+      });
+    };
+    onRegisterBlock(block.id, getExercises);
+    return () => onRegisterBlock(block.id, null);
+  }, [block.id, isComplex, steps, rounds, stepKgs, exIds, onRegisterBlock]);
+
+  const cfgStr = (() => {
+    const c = block.cfg;
+    if (!c) return '';
+    if (isComplex) return `${rounds} rondas`;
+    if (c.sets && c.reps) return `${c.sets}×${c.reps}`;
+    if (c.rounds) return `${c.rounds} rondas`;
+    if (c.duration) return `${c.duration} min`;
+    if (c.work) return `${c.work}/${c.rest2}s ×${c.rounds}`;
+    return '';
+  })();
+
+  return (
+    <div className="sess-block">
+      <div className="sess-block-hdr">
+        <span className={`sbt sbt-${block.type}`}>{block.type}</span>
+        <div className="sb-name">{block.name}</div>
+        {isComplex && (
+          <div style={{ display:'flex',alignItems:'center',gap:4,marginLeft:6,flexShrink:0 }}>
+            <div style={{ width:28,height:28,borderRadius:'50%',border:'1.5px solid var(--border2)',background:'var(--card2)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:16 }} onClick={()=>setRounds(r=>Math.max(1,r-1))}>−</div>
+            <span style={{ fontFamily:'var(--fm)',fontSize:13,minWidth:20,textAlign:'center' }}>{rounds}</span>
+            <div style={{ width:28,height:28,borderRadius:'50%',border:'1.5px solid var(--border2)',background:'var(--card2)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:16 }} onClick={()=>setRounds(r=>r+1)}>+</div>
+          </div>
+        )}
+        <div className="sb-del" onClick={onRemove}>✕</div>
+      </div>
+
+      {isComplex ? (
+        /* Complex: show each step with its reps, no separate sets table */
+        <>
+          <div style={{ padding:'8px 14px 4px',borderBottom:'1px solid var(--border)' }}>
+            <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:8 }}>
+              {lang==='es'?`${rounds} rondas · marcá cada vuelta`:`${rounds} rounds · check each round`}
+            </div>
+            {steps.map((st,i) => {
+              const ex = exById(st.exId);
+              if (!ex) return null;
+              const isBW = ex.type === 'bw';
+              const kg = stepKgs[i] ?? (isBW ? 0 : 16);
+              return (
+                <div key={i} style={{ padding:'8px 0',borderBottom:i<steps.length-1?'1px solid var(--border)':'none' }}>
+                  <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:isBW?0:6 }}>
+                    <span style={{ fontSize:16 }}>{ex.ico}</span>
+                    <span style={{ fontFamily:'var(--fb)',fontWeight:600,fontSize:14,flex:1 }}>{exName(ex,lang)}</span>
+                    <input type="number" style={{ width:46,padding:'4px',textAlign:'center',background:'var(--bg2)',border:'1.5px solid var(--border)',borderRadius:'var(--rsm)',fontFamily:'var(--fm)',fontSize:14,color:'var(--ink)',outline:'none' }}
+                      value={st.reps} min={1}
+                      onFocus={e=>e.target.select()}
+                      onChange={e=>updateStepReps(i,parseInt(e.target.value)||1)} />
+                    <span style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)' }}>reps</span>
+                    <div className="s-del" onClick={()=>removeStep(i)}>✕</div>
+                  </div>
+                  {!isBW && (
+                    <div style={{ display:'flex',gap:4,flexWrap:'wrap',paddingLeft:26 }}>
+                      {[8,12,16,20,24,28,32].map(v=>(
+                        <div key={v} onClick={()=>updateStepKg(i,v)}
+                          style={{ padding:'3px 8px',borderRadius:20,border:`1.5px solid ${kg===v?'var(--ink)':'var(--border2)'}`,background:kg===v?'var(--ink)':'transparent',color:kg===v?'var(--bg)':'var(--ink2)',fontFamily:'var(--fm)',fontSize:10,cursor:'pointer' }}>
+                          {v}kg
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Round checklist */}
+          <div style={{ padding:'10px 14px',display:'flex',gap:6,flexWrap:'wrap' }}>
+            {Array.from({length:rounds},(_,i)=>(
+              <RoundCheck key={i} num={i+1} />
+            ))}
+          </div>
+          <div className="add-set-row">
+            <button className="add-set-btn" onClick={()=>setShowPicker(true)}>+ {lang==='es'?'Agregar paso':'Add step'}</button>
+          </div>
+        </>
+      ) : (
+        /* Normal blocks: full sets table per exercise */
+        <>
+          {exIds.map(id => (
+            <SetsLogger key={id+block.id} exId={id} lang={lang} history={history} blockId={block.id}
+              defaultSets={block.cfg?.sets || 3}
+              defaultReps={block.cfg?.reps || 5}
+              defaultKg={block.exKgs?.[id]}
+              onRemoveEx={removeFreeEx}
+              onRegister={registerSetter} />
+          ))}
+          <div className="add-set-row" style={{ borderTop: exIds.length ? '1px solid var(--border)' : 'none' }}>
+            <button className="add-set-btn" onClick={()=>setShowPicker(true)}>
+              + {lang==='es'?'Agregar ejercicio':'Add exercise'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {showPicker && <ExPicker lang={lang} onPick={isComplex ? addEx : addFreeEx} onClose={()=>setShowPicker(false)} />}
+    </div>
+  );
+}
+
+// Small round checkbox component
+function RoundCheck({ num }) {
+  const [done, setDone] = useState(false);
+  return (
+    <div onClick={()=>setDone(d=>!d)} style={{ width:36,height:36,borderRadius:'50%',border:`2px solid ${done?'var(--ink)':'var(--border2)'}`,background:done?'var(--ink)':'var(--card2)',color:done?'var(--bg)':'var(--ink3)',fontFamily:'var(--fm)',fontSize:12,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',transition:'all .2s' }}>
+      {done?'✓':num}
+    </div>
+  );
+}
+
+// ─── BLOCK CONFIG MODAL ───────────────────────────────────────────────────────
+function BlockCfgModal({ blockType, lang, customComplexes, onSave, onClose }) {
+  const [name, setName] = useState({ sets:'Series',circuit:'Circuito',emom:'EMOM',amrap:'AMRAP',reps:'Reps totales',intervals:'Intervalos' }[blockType] || blockType);
+  const [sets, setSets] = useState(3);
+  const [reps, setReps] = useState(5);
+  const [rest, setRest] = useState(90);
+  const [rounds, setRounds] = useState(5);
+  const [duration, setDuration] = useState(20);
+  const [segs, setSegs] = useState(60);
+  const [totalReps, setTotalReps] = useState(100);
+  const [work, setWork] = useState(40);
+  const [rest2, setRest2] = useState(20);
+  const [exIds, setExIds] = useState([]);
+  const [exReps, setExReps] = useState({});
+  const [exKgs, setExKgs] = useState({});
+  const [selectedCx, setSelectedCx] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const allCx = [...COMPLEXES_BUILTIN, ...(customComplexes||[])];
+  const addEx = id => {
+    const ex = exById(id);
+    const isBW = ex?.type === 'bw';
+    setExIds(ids => [...ids, id]);
+    setExReps(r => ({...r,[id]:5}));
+    setExKgs(k => ({...k,[id]:isBW?0:16}));
+    setShowPicker(false);
+  };
+  const removeEx = id => { setExIds(ids => ids.filter(i=>i!==id)); };
+  const buildCfg = () => {
+    if (blockType==='sets')      return { sets, reps, rest };
+    if (blockType==='circuit')   return { rounds, rest };
+    if (blockType==='emom')      return { duration, segs };
+    if (blockType==='amrap')     return { duration };
+    if (blockType==='reps')      return { totalReps };
+    if (blockType==='intervals') return { work, rest2, rounds };
+    return {};
+  };
+  const save = () => {
+    const block = { id: uid(), type: blockType, name, cfg: buildCfg() };
+    if (blockType==='complex' && selectedCx) block.complexId = selectedCx;
+    if (exIds.length) {
+      block.exIds = exIds;
+      block.exKgs = exKgs;  // per-exercise kg
+    }
+    onSave(block);
+  };
+  const selAll = e => e.target.select();
+  const KgChips = ({ id }) => (
+    <div style={{ display:'flex',gap:4,flexWrap:'wrap',marginTop:4 }}>
+      {[0,8,12,16,20,24,28,32].map(v=>(
+        <div key={v} onClick={()=>setExKgs(k=>({...k,[id]:v}))}
+          style={{ padding:'3px 8px',borderRadius:20,border:`1.5px solid ${(exKgs[id]??16)===v?'var(--ink)':'var(--border2)'}`,background:(exKgs[id]??16)===v?'var(--ink)':'transparent',color:(exKgs[id]??16)===v?'var(--bg)':'var(--ink2)',fontFamily:'var(--fm)',fontSize:10,cursor:'pointer' }}>
+          {v===0?'BW':v}
+        </div>
+      ))}
+    </div>
+  );
+  const Field = ({ label, value, onChange, min=1, step=1 }) => (
+    <div style={{ flex: 1 }}>
+      <div className="sec-lbl" style={{ marginBottom: 5 }}>{label}</div>
+      <input className="bcfg-in" type="number" value={value} min={min} step={step}
+        onFocus={selAll} onChange={e=>onChange(parseFloat(e.target.value)||0)} />
+    </div>
+  );
+  return (
+    <Modal onClose={onClose} maxH="88vh">
+      <div className="modal-hdr">
+        <div className="modal-title">{{ sets:'Series',circuit:'Circuito',complex:'Complejo',emom:'EMOM',amrap:'AMRAP',reps:'Reps totales',intervals:'Intervalos' }[blockType]||blockType}</div>
+      </div>
+      <div className="modal-body">
+        <div>
+          <div className="sec-lbl" style={{ marginBottom: 5 }}>{lang==='es'?'Nombre del bloque':'Block name'}</div>
+          <input className="inp" value={name} onChange={e=>setName(e.target.value)} />
+        </div>
+        {blockType==='sets' && (
+          <div style={{ display:'flex', gap:8 }}>
+            <Field label="Series" value={sets} onChange={setSets} />
+            <Field label="Reps" value={reps} onChange={setReps} />
+            <Field label="Descanso(s)" value={rest} onChange={setRest} min={0} step={10} />
+          </div>
+        )}
+        {(blockType==='circuit'||blockType==='complex') && (
+          <div style={{ display:'flex', gap:8 }}>
+            <Field label="Rondas" value={rounds} onChange={setRounds} />
+            <Field label="Descanso(s)" value={rest} onChange={setRest} min={0} step={10} />
+          </div>
+        )}
+        {blockType==='emom' && (
+          <div style={{ display:'flex', gap:8 }}>
+            <Field label="Duración(min)" value={duration} onChange={setDuration} />
+            <Field label="Seg/ronda" value={segs} onChange={setSegs} min={10} step={5} />
+          </div>
+        )}
+        {blockType==='amrap' && <Field label="Duración(min)" value={duration} onChange={setDuration} />}
+        {blockType==='reps' && <Field label="Reps totales" value={totalReps} onChange={setTotalReps} />}
+        {blockType==='intervals' && (
+          <div style={{ display:'flex', gap:8 }}>
+            <Field label="Trabajo(s)" value={work} onChange={setWork} min={5} step={5} />
+            <Field label="Descanso(s)" value={rest2} onChange={setRest2} min={0} step={5} />
+            <Field label="Rondas" value={rounds} onChange={setRounds} />
+          </div>
+        )}
+        {blockType==='complex' && (
+          <div>
+            <div className="sec-lbl" style={{ marginBottom: 8 }}>{lang==='es'?'Elegí un complejo (opcional)':'Pick a complex (optional)'}</div>
+            <div style={{ border: '1.5px solid var(--border)', borderRadius: 'var(--r)', overflow:'hidden', marginBottom: 10 }}>
+              {allCx.map(cx => (
+                <div key={cx.id} className="picker-row" style={{ background: selectedCx===cx.id?'var(--card2)':'', fontWeight: selectedCx===cx.id?700:400 }} onClick={() => setSelectedCx(cx.id)}>
+                  {lang==='es'?cx.es:cx.en} {selectedCx===cx.id?'✓':''}
+                </div>
+              ))}
+            </div>
+            <div className="sec-lbl" style={{ marginBottom: 8 }}>{lang==='es'?'O armá el flujo manualmente:':'Or build the flow manually:'}</div>
+          </div>
+        )}
+        {blockType !== 'complex' && (
+          <div>
+            <div className="sec-lbl" style={{ marginBottom: 8 }}>{lang==='es'?'Ejercicios':'Exercises'}</div>
+            {exIds.map(id => {
+              const ex = exById(id);
+              const isBW = ex?.type === 'bw';
+              return ex ? (
+                <div key={id} style={{ marginBottom:8,padding:'10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--rsm)' }}>
+                  <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:isBW?0:6 }}>
+                    <span style={{ fontSize:16 }}>{ex.ico}</span>
+                    <span style={{ flex:1,fontFamily:'var(--fb)',fontWeight:600,fontSize:13 }}>{exName(ex,lang)}</span>
+                    <input className="bcfg-ex-reps" type="number" value={exReps[id]||5} min={1}
+                      onFocus={selAll} onChange={e=>setExReps(r=>({...r,[id]:parseInt(e.target.value)||1}))} />
+                    <span style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)' }}>reps</span>
+                    <div style={{ width:24,height:24,borderRadius:'50%',border:'1px solid var(--border)',background:'none',color:'var(--ink3)',fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }} onClick={()=>removeEx(id)}>✕</div>
+                  </div>
+                  {!isBW && <KgChips id={id} />}
+                </div>
+              ) : null;
+            })}
+            <button className="btn btn-out btn-sm" style={{ width:'100%', marginTop: 4 }} onClick={()=>setShowPicker(true)}>
+              + {lang==='es'?'Agregar ejercicio':'Add exercise'}
+            </button>
+          </div>
+        )}
+        <button className="btn btn-ink" style={{ width:'100%' }} onClick={save}>
+          {lang==='es'?'Agregar bloque':'Add block'}
+        </button>
+      </div>
+      {showPicker && <ExPicker lang={lang} onPick={addEx} onClose={()=>setShowPicker(false)} />}
+    </Modal>
+  );
+}
+
+// ─── PROGRAM BUILDER MODAL ────────────────────────────────────────────────────
+function ProgBuilderModal({ lang, customComplexes, onSave, onClose }) {
+  const [progName, setProgName] = useState('');
+  const [ico, setIco] = useState('🏋️');
+  const [blocks, setBlocks] = useState([]);
+  const [addingType, setAddingType] = useState(null);
+  const addBlock = blk => { setBlocks(b => [...b, blk]); setAddingType(null); };
+  const removeBlock = id => setBlocks(b => b.filter(blk=>blk.id!==id));
+  const save = () => {
+    if (!blocks.length) return;
+    const p = { id: uid(), es: progName||(lang==='es'?'Mi programa':'My program'), en: progName||(lang==='en'?'My program':'Mi programa'), ico, builtin: false, desc_es:'Programa personalizado', desc_en:'Custom program', blocks };
+    onSave(p);
+  };
+  return (
+    <Modal onClose={onClose} maxH="94vh">
+      <div className="modal-hdr"><div className="modal-title">{lang==='es'?'Crear programa':'Create program'}</div></div>
+      <div className="modal-body">
+        <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
+          <div style={{ flex:1 }}>
+            <div className="sec-lbl" style={{ marginBottom:5 }}>{lang==='es'?'Nombre':'Name'}</div>
+            <input className="inp" value={progName} onChange={e=>setProgName(e.target.value)} placeholder={lang==='es'?'Mi programa':'My program'} />
+          </div>
+          <div>
+            <div className="sec-lbl" style={{ marginBottom:5 }}>Ícono</div>
+            <input className="inp" style={{ width:52, textAlign:'center' }} value={ico} onChange={e=>setIco(e.target.value)} maxLength={2} />
+          </div>
+        </div>
+        <div>
+          <div className="sec-lbl" style={{ marginBottom:8 }}>{lang==='es'?'Bloques':'Blocks'}</div>
+          {blocks.length === 0 && (
+            <div style={{ color:'var(--ink3)', fontSize:12, padding:'8px 0' }}>{lang==='es'?'Agregá bloques ↓':'Add blocks ↓'}</div>
+          )}
+          {blocks.map((b,i) => {
+            const exNames = (b.exIds||[]).map(id=>{ const e=exById(id); return e?exName(e,lang):'?'; }).join(' → ');
+            const cfgParts = [];
+            if(b.cfg?.sets) cfgParts.push(`${b.cfg.sets} series`);
+            if(b.cfg?.reps) cfgParts.push(`${b.cfg.reps} reps`);
+            if(b.cfg?.rounds) cfgParts.push(`${b.cfg.rounds} rondas`);
+            if(b.cfg?.duration) cfgParts.push(`${b.cfg.duration} min`);
+            if(b.cfg?.work) cfgParts.push(`${b.cfg.work}/${b.cfg.rest2}s`);
+            if(b.complexId){ const cx=cxById(b.complexId, customComplexes); if(cx) cfgParts.unshift(lang==='es'?cx.es:cx.en); }
+            const desc = [exNames, cfgParts.join(' · ')].filter(Boolean).join(' · ');
+            return (
+              <div key={b.id} className="pb-block">
+                <div style={{ display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderBottom:'1px solid var(--border)' }}>
+                  <span className={`pb-btype pb-btype-${b.type}`} style={{ fontFamily:'var(--fm)',fontSize:10,textTransform:'uppercase',letterSpacing:'.1em',padding:'3px 9px',borderRadius:12,border:'1px solid',flexShrink:0, color: {sets:'var(--pull)',circuit:'var(--squat)',complex:'var(--ink2)',emom:'var(--hinge)',amrap:'var(--push)',reps:'var(--core)',intervals:'var(--carry)'}[b.type], borderColor: {sets:'var(--pull)',circuit:'var(--squat)',complex:'var(--border2)',emom:'var(--hinge)',amrap:'var(--push)',reps:'var(--core)',intervals:'var(--carry)'}[b.type] }}>{b.type}</span>
+                  <div style={{ flex:1,fontFamily:'var(--fb)',fontWeight:600,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.name}</div>
+                  <div style={{ width:26,height:26,borderRadius:'50%',border:'1px solid var(--border)',background:'none',color:'var(--ink3)',fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0 }} onClick={()=>removeBlock(b.id)}>✕</div>
+                </div>
+                {desc && <div style={{ padding:'8px 12px',fontSize:12,color:'var(--ink2)',lineHeight:1.6 }}>{desc}</div>}
+              </div>
+            );
+          })}
+        </div>
+        <div>
+          <div className="sec-lbl" style={{ marginBottom:8 }}>{lang==='es'?'Agregar bloque':'Add block'}</div>
+          <div className="block-type-grid">
+            {BLOCK_TYPES.map(bt => (
+              <button key={bt.type} className="btype-btn" onClick={()=>setAddingType(bt.type)}>
+                <span style={{ fontSize:18,display:'block',marginBottom:3 }}>{bt.ico}</span>
+                <span style={{ fontFamily:'var(--fb)',fontWeight:700,fontSize:13,display:'block',color:'var(--ink)' }}>{lang==='es'?bt.es:bt.en}</span>
+                <span style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',marginTop:1,display:'block' }}>{lang==='es'?bt.sub_es:bt.sub_en}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <button className="btn btn-ink" style={{ width:'100%' }} onClick={save}>
+          {lang==='es'?'Guardar programa':'Save program'}
+        </button>
+      </div>
+      {addingType && (
+        <BlockCfgModal blockType={addingType} lang={lang} customComplexes={customComplexes} onSave={addBlock} onClose={()=>setAddingType(null)} />
+      )}
+    </Modal>
+  );
+}
+
+// ─── COMPLEX CREATOR ──────────────────────────────────────────────────────────
+function CxCreator({ lang, onSave }) {
+  const [name, setName] = useState('');
+  const [steps, setSteps] = useState([]);
+  const [rounds, setRounds] = useState(3);
+  const [rest, setRest] = useState(90);
+  const [showPicker, setShowPicker] = useState(false);
+  const addEx = id => { setSteps(s => [...s, { exId:id, reps:5 }]); setShowPicker(false); };
+  const removeStep = i => setSteps(s => s.filter((_,idx)=>idx!==i));
+  const save = () => {
+    if (!steps.length) return;
+    onSave({ id:'cu'+uid(), es:name||(lang==='es'?'Mi complejo':'My complex'), en:name||(lang==='en'?'My complex':'Mi complejo'), author:'', desc_es:'Complejo personalizado', desc_en:'Custom complex', steps, rounds, rest });
+    setSteps([]); setName(''); setRounds(3); setRest(90);
+  };
+  return (
+    <div style={{ padding:'0 18px', marginBottom:16 }}>
+      <div className="sec-lbl" style={{ marginBottom:12 }}>{lang==='es'?'Creá tu complejo':'Build your complex'}</div>
+      <div style={{ padding:16,background:'var(--card)',border:'1.5px dashed var(--border2)',borderRadius:'var(--r)' }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:22,marginBottom:14 }}>{lang==='es'?'Tu complejo':'Your complex'}</div>
+        <div className="sec-lbl" style={{ marginBottom:8 }}>{lang==='es'?'Pasos':'Steps'}</div>
+        <div style={{ display:'flex',flexDirection:'column',gap:8,marginBottom:12 }}>
+          {steps.length === 0 && <div style={{ color:'var(--ink3)',fontSize:12,padding:'6px 0' }}>{lang==='es'?'Agregá ejercicios ↓':'Add exercises ↓'}</div>}
+          {steps.map((st,i) => {
+            const ex = exById(st.exId);
+            return (
+              <div key={i} style={{ display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--rsm)' }}>
+                <span style={{ fontSize:16 }}>{ex?.ico}</span>
+                <span style={{ fontFamily:'var(--fb)',fontWeight:600,fontSize:14,flex:1 }}>{ex?exName(ex,lang):'?'}</span>
+                <input style={{ width:40,padding:4,textAlign:'center',background:'var(--card)',border:'1px solid var(--border)',borderRadius:4,fontFamily:'var(--fm)',fontSize:13,color:'var(--ink)',outline:'none' }} type="number" value={st.reps} min={1} onChange={e=>setSteps(s=>s.map((x,idx)=>idx===i?{...x,reps:parseInt(e.target.value)||1}:x))} />
+                <div className="csp-del" onClick={()=>removeStep(i)}>✕</div>
+              </div>
+            );
+          })}
+        </div>
+        <button className="btn btn-out btn-sm" style={{ width:'100%',marginBottom:10 }} onClick={()=>setShowPicker(true)}>+ {lang==='es'?'Agregar ejercicio':'Add exercise'}</button>
+        <div style={{ marginBottom:10 }}>
+          <div className="sec-lbl" style={{ marginBottom:5 }}>{lang==='es'?'Nombre':'Name'}</div>
+          <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder={lang==='es'?'Ej: Mi complejo':'e.g. My complex'} />
+        </div>
+        <div style={{ display:'flex',gap:8,marginBottom:14 }}>
+          <div style={{ flex:1 }}><div className="sec-lbl" style={{ marginBottom:5 }}>{lang==='es'?'Rondas':'Rounds'}</div><input className="inp" type="number" value={rounds} min={1} onChange={e=>setRounds(parseInt(e.target.value)||1)} /></div>
+          <div style={{ flex:1 }}><div className="sec-lbl" style={{ marginBottom:5 }}>{lang==='es'?'Descanso(s)':'Rest(s)'}</div><input className="inp" type="number" value={rest} min={0} step={10} onChange={e=>setRest(parseInt(e.target.value)||0)} /></div>
+        </div>
+        <button className="btn btn-ink" style={{ width:'100%' }} onClick={save}>{lang==='es'?'Guardar complejo':'Save complex'}</button>
+      </div>
+      {showPicker && <ExPicker lang={lang} onPick={addEx} onClose={()=>setShowPicker(false)} />}
+    </div>
+  );
+}
+
+// ─── TIMER HOOK ───────────────────────────────────────────────────────────────
+// ─── AUDIO ENGINE ────────────────────────────────────────────────────────────
+const AudioCtx = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
+function beep(freq, dur, vol=0.4, type='sine') {
+  if (!AudioCtx) return;
+  try {
+    if (AudioCtx.state === 'suspended') AudioCtx.resume();
+    const o = AudioCtx.createOscillator();
+    const g = AudioCtx.createGain();
+    o.connect(g); g.connect(AudioCtx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, AudioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AudioCtx.currentTime + dur);
+    o.start(AudioCtx.currentTime);
+    o.stop(AudioCtx.currentTime + dur);
+  } catch(e) {}
+}
+function playBeep()  { beep(880, 0.12, 0.35, 'square'); }   // pip — countdown
+function playBell()  {                                         // bell — time's up
+  beep(660, 0.08, 0.5, 'sine');
+  setTimeout(() => beep(880, 0.08, 0.5, 'sine'), 100);
+  setTimeout(() => beep(1100, 0.3, 0.5, 'sine'), 200);
+}
+function resumeAudio() { if (AudioCtx?.state === 'suspended') AudioCtx.resume(); }
+
+// ─── DRUM COLUMN (reusable scroll wheel) ─────────────────────────────────────
+function DrumCol({ val, onChange, max, label }) {
+  const ITEM_H = 52;
+  const count = max + 1;
+  const REPEAT = 7;
+  const total = count * REPEAT;
+  const middleOffset = Math.floor(REPEAT / 2) * count;
+  const ref = useRef(null);
+  const didMount = useRef(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    // Use rAF so the DOM is painted before we scroll
+    requestAnimationFrame(() => {
+      if (ref.current) {
+        // scroll so that val sits in the center slot (which is at offset ITEM_H from top)
+        // center slot index = scrollTop/ITEM_H, so scrollTop = (middleOffset + val - 1) * ITEM_H
+        ref.current.scrollTop = (middleOffset + val - 1) * ITEM_H;
+        didMount.current = true;
+      }
+    });
+  }, []); // eslint-disable-line
+
+  const settling = useRef(false);
+
+  const snap = () => {
+    if (!ref.current) return;
+    settling.current = true;
+    const raw = Math.round(ref.current.scrollTop / ITEM_H);
+    const v = (((raw + 1) % count) + count) % count;
+    const newTop = (middleOffset + v - 1) * ITEM_H;
+    ref.current.scrollTop = newTop;
+    onChange(v);
+    setTimeout(() => { settling.current = false; }, 80);
+  };
+
+  const onScroll = () => {
+    if (!ref.current || settling.current || !didMount.current) return;
+    const raw = Math.round(ref.current.scrollTop / ITEM_H);
+    const v = (((raw + 1) % count) + count) % count;
+    onChange(v);
+  };
+
+  const items = Array.from({ length: total }, (_, i) => ((i % count) + count) % count);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+      <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',textTransform:'uppercase',letterSpacing:'.1em' }}>{label}</div>
+      <div style={{ position:'relative', width:72, height: ITEM_H*3, overflow:'hidden', borderRadius:8 }}>
+        {/* top fade */}
+        <div style={{ position:'absolute',top:0,left:0,right:0,height:ITEM_H,background:'linear-gradient(var(--card),transparent)',zIndex:2,pointerEvents:'none' }}/>
+        {/* bottom fade */}
+        <div style={{ position:'absolute',bottom:0,left:0,right:0,height:ITEM_H,background:'linear-gradient(transparent,var(--card))',zIndex:2,pointerEvents:'none' }}/>
+        {/* selection highlight */}
+        <div style={{ position:'absolute',top:ITEM_H,left:4,right:4,height:ITEM_H,background:'var(--bg2)',border:'1.5px solid var(--border2)',borderRadius:6,zIndex:1,pointerEvents:'none' }}/>
+        <div
+          ref={ref}
+          onScroll={onScroll}
+          onTouchEnd={snap}
+          onMouseUp={snap}
+          className="drum-scroll"
+          style={{ height:'100%',scrollbarWidth:'none',zIndex:3,position:'relative' }}
+        >
+          {items.map((v, i) => (
+            <div key={i} style={{ height:ITEM_H,display:'flex',alignItems:'center',justifyContent:'center',scrollSnapAlign:'center',fontFamily:'var(--fm)',fontSize:28,color:v===val?'var(--ink)':'var(--ink3)',fontWeight:v===val?700:400,userSelect:'none',cursor:'default' }}>
+              {pad(v)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── TIME PICKER MODAL ───────────────────────────────────────────────────────
+function TimePicker({ value, onConfirm, onClose, lang }) {
+  const [mins, setMins] = useState(Math.floor(value / 60));
+  const [secs, setSecs] = useState(value % 60);
+  return (
+    <Modal onClose={onClose} maxH="400px">
+      <div className="modal-hdr">
+        <div className="modal-title">{lang==='es'?'Ajustar tiempo':'Set time'}</div>
+      </div>
+      <div style={{ padding:'20px 20px 32px' }}>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:12 }}>
+          <DrumCol val={mins} onChange={setMins} max={99} label={lang==='es'?'min':'min'} />
+          <div style={{ fontFamily:'var(--fd)',fontSize:48,color:'var(--ink)',marginTop:20,lineHeight:1 }}>:</div>
+          <DrumCol val={secs} onChange={setSecs} max={59} label={lang==='es'?'seg':'sec'} />
+        </div>
+        <button className="btn btn-ink" style={{ width:'100%',marginTop:20 }} onClick={()=>onConfirm(mins*60+secs)}>
+          {lang==='es'?'Confirmar':'Confirm'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── TIMER HOOK ───────────────────────────────────────────────────────────────
+function useTimer() {
+  const [mode, setMode] = useState('free');
+  const [running, setRunning] = useState(false);
+  const [secs, setSecs] = useState(0);
+  const [cfgA, setCfgA] = useState(20); // minutes for amrap/emom
+  const [cfgB, setCfgB] = useState(60); // secs per emom round
+  const [round, setRound] = useState(0);
+  const ivRef = useRef(null);
+
+  const stop = useCallback(() => {
+    clearInterval(ivRef.current);
+    setRunning(false);
+  }, []);
+  const reset = useCallback(() => { stop(); setSecs(0); setRound(0); }, [stop]);
+  const changeMode = useCallback((m) => { stop(); setSecs(0); setRound(0); setMode(m); }, [stop]);
+
+  // Sound triggers based on current seconds value
+  const soundRef = useRef(0);
+  const handleSound = useCallback((s) => {
+    if (s === soundRef.current) return;
+    soundRef.current = s;
+    if (s === 1) { setTimeout(playBeep,0); }          // 1 — pip
+    else if (s === 2) { setTimeout(playBeep,0); }     // 2 — pip
+    else if (s === 3) { setTimeout(playBeep,0); }     // 3 — pip
+    else if (s === 0) { setTimeout(playBell,0); }     // 0 — bell
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (running) { stop(); return; }
+    resumeAudio();
+    setRunning(true);
+    if (mode==='free') {
+      ivRef.current = setInterval(() => setSecs(s => s+1), 1000);
+    } else if (mode==='rest') {
+      const start = secs > 0 ? secs : 90;
+      if (secs === 0) setSecs(90);
+      ivRef.current = setInterval(() => setSecs(s => {
+        const next = s <= 1 ? 0 : s-1;
+        handleSound(next);
+        if (next === 0) stop();
+        return next;
+      }), 1000);
+    } else if (mode==='emom') {
+      const tot = cfgA, spR = cfgB;
+      setSecs(spR); setRound(1);
+      ivRef.current = setInterval(() => {
+        setSecs(s => {
+          const next = s <= 1 ? 0 : s-1;
+          handleSound(next);
+          if (next === 0) {
+            setRound(r => {
+              if (r >= tot) { stop(); return r; }
+              return r+1;
+            });
+            return spR;
+          }
+          return next;
+        });
+      }, 1000);
+    } else if (mode==='amrap') {
+      const total = cfgA * 60;
+      if (secs === 0) setSecs(total);
+      ivRef.current = setInterval(() => setSecs(s => {
+        const next = s <= 1 ? 0 : s-1;
+        handleSound(next);
+        if (next === 0) stop();
+        return next;
+      }), 1000);
+    }
+  }, [running, mode, secs, cfgA, cfgB, stop, handleSound]);
+
+  useEffect(() => () => clearInterval(ivRef.current), []);
+  return { mode, running, secs, setSecs, cfgA, cfgB, round, setCfgA, setCfgB, changeMode, toggle, reset, stop };
+}
+
+// ─── SESSION SCREEN ───────────────────────────────────────────────────────────
+function SessionScreen({ lang, history, customComplexes, state, dispatch }) {
+  const { active, progName, energy, elapsed, blocks } = state;
+  const timer = useTimer();
+  const [note, setNote] = useState('');
+  const [showAddBlock, setShowAddBlock] = useState(false);
+  const [addingBlockType, setAddingBlockType] = useState(null);
+  const [showCxPicker, setShowCxPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [timePickerTarget, setTimePickerTarget] = useState('a');
+
+  const blockRegistry = useRef({});
+  const registerBlock = useCallback((blockId, getter) => {
+    if (getter) blockRegistry.current[blockId] = getter;
+    else delete blockRegistry.current[blockId];
+  }, []);
+
+  const addBlock = blk => { dispatch({ type:'ADD_BLOCK', block: blk }); setAddingBlockType(null); };
+  const addCxBlock = cxId => {
+    const cx = cxById(cxId, customComplexes);
+    if (!cx) return;
+    dispatch({ type:'ADD_BLOCK', block: {
+      id: uid(), type: 'complex',
+      name: lang==='es' ? cx.es : cx.en,
+      cfg: { rounds: cx.rounds, rest: cx.rest },
+      steps: cx.steps.map(s => ({ exId: s.exId, reps: typeof s.reps==='string'?parseInt(s.reps)||1:(s.reps||1) })),
+      exIds: cx.steps.map(s => s.exId),
+    }});
+    setShowCxPicker(false);
+  };
+  const allCx = [...COMPLEXES_BUILTIN, ...(customComplexes||[])];
+
+  // Called by parent's dispatch intercept — harvest real data before saving
+  const getSessionBlocks = useCallback(() => {
+    return blocks.map(b => {
+      const getter = blockRegistry.current[b.id];
+      const exercises = getter ? getter() : [];
+      return { type: b.type, name: b.name, exercises };
+    });
+  }, [blocks]);
+
+  // Expose getSessionBlocks so parent can call it on END_SESSION
+  useEffect(() => {
+    dispatch({ type: 'REGISTER_GETTER', getter: getSessionBlocks });
+  }, [getSessionBlocks]);
+  if (!active) {
+    return (
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',padding:'40px 24px',textAlign:'center' }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:80,lineHeight:.85,marginBottom:4 }}>KB</div>
+        <div style={{ fontFamily:'var(--fd)',fontSize:28,marginBottom:8 }}>{lang==='es'?'Sin sesión activa':'No active session'}</div>
+        <div style={{ fontSize:13,color:'var(--ink2)',lineHeight:1.6,marginBottom:28,maxWidth:280 }}>{lang==='es'?'Iniciá desde el Home.':'Start from Home.'}</div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ paddingBottom: 80 }}>
+      {/* top bar */}
+      <div className="sess-topbar">
+        <div style={{ flex:1 }}>
+          <div style={{ fontFamily:'var(--fd)',fontSize:22,lineHeight:1 }}>{progName}</div>
+          <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',marginTop:2 }}>{new Date().toLocaleDateString('es-AR')}</div>
+        </div>
+        <div className="elapsed-badge">{fmtTime(elapsed)}</div>
+        <button className="btn btn-red btn-sm" style={{ marginLeft:10 }} onClick={() => dispatch({ type:'END_SESSION', note })}>
+          {lang==='es'?'Finalizar':'Finish'}
+        </button>
+      </div>
+      {/* timer */}
+      <div className="timer-wrap">
+        <div className="timer-tabs">
+          {['free','emom','amrap','rest'].map(m => (
+            <button key={m} className={`tt${timer.mode===m?' on':''}`} onClick={()=>timer.changeMode(m)}>
+              {m==='free'?(lang==='es'?'Libre':'Free'):m==='rest'?(lang==='es'?'Descanso':'Rest'):m.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        {(timer.mode==='emom'||timer.mode==='amrap') && (
+          <div className="timer-cfg">
+            <div className="cfg-item">
+              <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',textTransform:'uppercase',letterSpacing:'.08em' }}>
+                {timer.mode==='emom'?'MINUTOS':'MINUTOS'}
+              </div>
+              <div className="cfg-row">
+                <div className="cfg-btn" onClick={()=>timer.setCfgA(a=>Math.max(1,a-1))}>−</div>
+                <div className="cfg-num" style={{ cursor:'pointer',textDecoration:'underline dotted' }}
+                  onClick={()=>{ setTimePickerTarget('a'); setShowTimePicker(true); }}>{timer.cfgA}</div>
+                <div className="cfg-btn" onClick={()=>timer.setCfgA(a=>a+1)}>+</div>
+              </div>
+            </div>
+            {timer.mode==='emom' && (
+              <div className="cfg-item">
+                <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',textTransform:'uppercase',letterSpacing:'.08em' }}>SEG/RONDA</div>
+                <div className="cfg-row">
+                  <div className="cfg-btn" onClick={()=>timer.setCfgB(b=>Math.max(5,b-5))}>−</div>
+                  <div className="cfg-num" style={{ cursor:'pointer',textDecoration:'underline dotted' }}
+                    onClick={()=>{ setTimePickerTarget('b'); setShowTimePicker(true); }}>{timer.cfgB}</div>
+                  <div className="cfg-btn" onClick={()=>timer.setCfgB(b=>b+5)}>+</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="timer-face">
+          <div
+            className={`t-time${timer.running?(timer.mode==='rest'?' rest':' run'):''}`}
+            style={{ cursor: (!timer.running && (timer.mode==='rest'||timer.mode==='amrap')) ? 'pointer' : 'default',
+                     color: (timer.running && timer.secs <= 3 && timer.secs > 0) ? 'var(--hinge)' : undefined,
+                     transition:'color .15s' }}
+            onClick={()=>{ if(!timer.running){ setTimePickerTarget(timer.mode==='amrap'?'amrap':'rest'); setShowTimePicker(true); } }}
+          >{fmtTime(timer.secs)}</div>
+          <div className="t-sub">{{ free:lang==='es'?'CRONÓMETRO':'STOPWATCH', rest:lang==='es'?'DESCANSO':'REST TIMER', emom:'EMOM', amrap:'AMRAP' }[timer.mode]}</div>
+          {!timer.running && (timer.mode==='rest'||timer.mode==='amrap') && (
+            <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',marginTop:2 }}>{lang==='es'?'tap para editar':'tap to edit'}</div>
+          )}
+          {timer.mode==='emom' && timer.round>0 && <div className="t-round">{lang==='es'?'Ronda':'Round'} {timer.round} / {timer.cfgA}</div>}
+        </div>
+        <div className="timer-btns">
+          <div className="t-btn" onClick={timer.reset}>↺</div>
+          <div className={`t-play${timer.running?' pulse':''}`} onClick={timer.toggle}>{timer.running?'⏸':'▶'}</div>
+          <div className="t-btn" onClick={()=>{}}>◎</div>
+        </div>
+      </div>
+      {/* blocks */}
+      <div style={{ padding:'0 18px' }}>
+        {blocks.map(blk => (
+          <SessionBlock key={blk.id} block={blk} lang={lang} history={history} customComplexes={customComplexes}
+            onRemove={() => dispatch({ type:'REMOVE_BLOCK', id:blk.id })}
+            onRegisterBlock={registerBlock}
+          />
+        ))}
+        {/* add block buttons */}
+        <div style={{ marginBottom:14 }}>
+          <div className="sec-lbl" style={{ marginBottom:8 }}>{lang==='es'?'Agregar bloque':'Add block'}</div>
+          <div style={{ display:'flex',gap:7,flexWrap:'wrap' }}>
+            {BLOCK_TYPES.map(bt => (
+              <button key={bt.type} className="btn btn-out btn-xs" onClick={()=>setAddingBlockType(bt.type)}>
+                {bt.ico} {lang==='es'?bt.es:bt.en}
+              </button>
+            ))}
+            <button className="btn btn-out btn-xs" onClick={()=>setShowCxPicker(true)}>🔗 {lang==='es'?'Complejo':'Complex'}</button>
+          </div>
+        </div>
+        <div className="sec-lbl" style={{ marginBottom:6 }}>{lang==='es'?'Nota de sesión':'Session note'}</div>
+        <textarea className="inp" style={{ height:68,resize:'none' }} value={note} onChange={e=>setNote(e.target.value)} placeholder={lang==='es'?'Sensaciones, PRs, notas...':'Feelings, PRs, notes...'} />
+      </div>
+      {addingBlockType && (
+        <BlockCfgModal blockType={addingBlockType} lang={lang} customComplexes={customComplexes} onSave={addBlock} onClose={()=>setAddingBlockType(null)} />
+      )}
+      {showTimePicker && (
+        <TimePicker
+          lang={lang}
+          value={timePickerTarget==='a' ? timer.cfgA*60 : timePickerTarget==='b' ? timer.cfgB : timer.secs}
+          onConfirm={val => {
+            if (timePickerTarget==='a') timer.setCfgA(Math.round(val/60)||1);
+            else if (timePickerTarget==='b') timer.setCfgB(val||5);
+            else { timer.setSecs(val); }
+            setShowTimePicker(false);
+          }}
+          onClose={()=>setShowTimePicker(false)}
+        />
+      )}
+      {showCxPicker && (
+        <Modal onClose={()=>setShowCxPicker(false)}>
+          <div className="modal-hdr">
+            <div className="modal-title">{lang==='es'?'Elegí un complejo':'Pick a complex'}</div>
+          </div>
+          <div style={{ overflowY:'auto',maxHeight:'60vh',paddingBottom:24 }}>
+            {allCx.map(cx => (
+              <div key={cx.id} className="picker-row" onClick={()=>addCxBlock(cx.id)}>
+                <span style={{ fontSize:20 }}>🔗</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:600,fontSize:14 }}>{lang==='es'?cx.es:cx.en}</div>
+                  <div style={{ fontSize:12,color:'var(--ink2)',marginTop:2 }}>{cx.rounds} {lang==='es'?'rondas':'rounds'} · {cx.steps.length} {lang==='es'?'ejercicios':'exercises'}</div>
+                </div>
+                <span style={{ color:'var(--ink3)',fontSize:18 }}>+</span>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── PROGRAMS SCREEN ──────────────────────────────────────────────────────────
+function ProgramsScreen({ lang, userPrograms, customComplexes, onSaveProg, onDeleteProg, onSaveCx, onStartProg, onStartCx }) {
+  const [tab, setTab] = useState('programs');
+  const [showBuilder, setShowBuilder] = useState(false);
+  const allProgs = [...PROGRAMS_BUILTIN, ...userPrograms];
+  const allCx = [...COMPLEXES_BUILTIN, ...customComplexes];
+  return (
+    <div className="screen">
+      <div style={{ padding:'18px 18px 0' }}><div style={{ fontFamily:'var(--fd)',fontSize:36,letterSpacing:'.02em' }}>Programas</div></div>
+      <div className="prog-tabs">
+        <button className={`pt${tab==='programs'?' on':''}`} onClick={()=>setTab('programs')}>{lang==='es'?'Mis programas':'My programs'}</button>
+        <button className={`pt${tab==='complexes'?' on':''}`} onClick={()=>setTab('complexes')}>{lang==='es'?'Complejos':'Complexes'}</button>
+      </div>
+      {tab==='programs' && (
+        <div style={{ paddingTop:14 }}>
+          <div style={{ padding:'0 18px 12px',display:'flex',justifyContent:'flex-end' }}>
+            <button className="btn btn-out btn-sm" onClick={()=>setShowBuilder(true)}>+ {lang==='es'?'Crear programa':'Create program'}</button>
+          </div>
+          {allProgs.map(p => (
+            <div key={p.id} className="prog-card card-press" onClick={()=>onStartProg(p)}>
+              <div className="prog-head">
+                <div className="prog-ico">{p.ico}</div>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontFamily:'var(--fd)',fontSize:22,lineHeight:1 }}>{lang==='es'?p.es:p.en}</div>
+                  <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)',marginTop:3 }}>{lang==='es'?p.desc_es:p.desc_en}</div>
+                </div>
+                {!p.builtin && (
+                  <div style={{ width:30,height:30,borderRadius:'50%',border:'1px solid rgba(196,88,58,.3)',background:'rgba(196,88,58,.06)',color:'var(--red)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0 }}
+                    onClick={e=>{e.stopPropagation();onDeleteProg(p.id)}}>✕</div>
+                )}
+              </div>
+              {p.blocks?.length > 0 && (
+                <div className="prog-blocks-row">
+                  {p.blocks.map(b => <span key={b.id} className="prog-block-chip">{b.name}</span>)}
+                </div>
+              )}
+            </div>
+          ))}
+          <div style={{ height:80 }} />
+        </div>
+      )}
+      {tab==='complexes' && (
+        <div style={{ paddingTop:14 }}>
+          {allCx.map(cx => {
+            const name = lang==='es'?cx.es:cx.en;
+            const desc = lang==='es'?cx.desc_es:cx.desc_en;
+            const note = lang==='es'?cx.note_es:cx.note_en;
+            return (
+              <div key={cx.id} className="cx-card card-press" onClick={()=>onStartCx(cx)}>
+                <div className="cx-top">
+                  <div className="cx-badge">
+                    <div className="cx-badge-dot"/>
+                    <span style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',letterSpacing:'.1em',textTransform:'uppercase' }}>
+                      {cx.author ? `${cx.type==='builtin'?'CLÁSICO':'MI COMPLEJO'} · ${cx.author}` : 'MI COMPLEJO'}
+                    </span>
+                  </div>
+                  <div style={{ fontFamily:'var(--fd)',fontSize:24,lineHeight:1,marginBottom:4 }}>{name}</div>
+                  <div style={{ fontSize:12,color:'var(--ink2)',lineHeight:1.5 }}>{desc}</div>
+                </div>
+                <div className="cx-chain">
+                  {cx.steps.map((st,i) => {
+                    const ex = exById(st.exId);
+                    return (
+                      <React.Fragment key={i}>
+                        {i>0 && <span style={{ padding:'0 3px',color:'var(--ink3)',fontSize:11 }}>→</span>}
+                        <div className="cx-step">{ex?exName(ex,lang):'?'}<small>×{st.reps}</small></div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+                <div className="cx-meta">
+                  <span style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}><strong style={{ color:'var(--ink)' }}>{cx.rounds}</strong> {lang==='es'?'rondas':'rounds'}</span>
+                  <span style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}><strong style={{ color:'var(--ink)' }}>{cx.rest}"</strong> {lang==='es'?'descanso':'rest'}</span>
+                  {note && <span style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}>{note}</span>}
+                </div>
+              </div>
+            );
+          })}
+          <CxCreator lang={lang} onSave={onSaveCx} />
+          <div style={{ height:80 }} />
+        </div>
+      )}
+      {showBuilder && (
+        <ProgBuilderModal lang={lang} customComplexes={customComplexes}
+          onSave={p=>{ onSaveProg(p); setShowBuilder(false); }}
+          onClose={()=>setShowBuilder(false)} />
+      )}
+    </div>
+  );
+}
+
+// ─── HOME SCREEN ──────────────────────────────────────────────────────────────
+function HomeScreen({ lang, history, onAction }) {
+  const now = new Date();
+  const qi = now.getDate() % QUOTES.length;
+  const q = QUOTES[qi];
+  const h = now.getHours();
+  const greet = lang==='es' ? (h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches') : (h<12?'Good morning':h<18?'Good afternoon':'Good evening');
+  const dEs=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+  const dEn=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const mEs=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const mEn=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const dn = lang==='es'?dEs[now.getDay()]:dEn[now.getDay()];
+  const mn = lang==='es'?mEs[now.getMonth()]:mEn[now.getMonth()];
+  const todayI = now.getDay();
+  const wsStart = new Date(now); wsStart.setDate(now.getDate()-todayI); wsStart.setHours(0,0,0,0);
+  const trainedDates = new Set(history.map(h=>h.date));
+  const wkCount = history.filter(h=>new Date(h.date+'T12:00:00')>=wsStart).length;
+  const streak = (() => {
+    let s=0, c=new Date(); c.setHours(0,0,0,0);
+    while(trainedDates.has(c.toISOString().split('T')[0])){s++;c.setDate(c.getDate()-1);}
+    return s;
+  })();
+  const wNames = lang==='es'?['D','L','M','X','J','V','S']:['S','M','T','W','T','F','S'];
+  const last = history[0];
+  return (
+    <div className="screen" style={{ paddingBottom:80 }}>
+      <div className="home-hero">
+        <div className="home-greeting">{greet}</div>
+        <div className="home-big" dangerouslySetInnerHTML={{__html:`${dn}<br>${now.getDate()} ${mn}`}} />
+      </div>
+      <div className="week-strip">
+        {Array.from({length:7},(_,i)=>{
+          const d=new Date(wsStart); d.setDate(wsStart.getDate()+i);
+          const ds=d.toISOString().split('T')[0];
+          const trained=trainedDates.has(ds), today=i===todayI;
+          return (
+            <div key={i} className="wd">
+              <div className="wd-name">{wNames[i]}</div>
+              <div className={`wd-dot${trained?' trained':''}${today?' today':''}`}>{d.getDate()}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="quote-card">
+        <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8 }}>{lang==='es'?'Quote del día':'Quote of the day'}</div>
+        <div style={{ fontFamily:'var(--fb)',fontSize:14,lineHeight:1.6,color:'var(--ink2)',fontStyle:'italic' }}>{lang==='es'?q.es:q.en}</div>
+        <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)',marginTop:6 }}>— {q.a}</div>
+      </div>
+      <div className="home-stats">
+        {[{v:history.length,l:lang==='es'?'Sesiones':'Sessions'},{v:wkCount,l:lang==='es'?'Esta semana':'This week'},{v:streak,l:lang==='es'?'Racha':'Streak'}].map((s,i)=>(
+          <div key={i} className="hstat">
+            <div className="hstat-v">{s.v}</div>
+            <div className="hstat-l">{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding:'0 18px',marginBottom:14 }}>
+        <div className="sec-lbl" style={{ marginBottom:10 }}>{lang==='es'?'Acciones rápidas':'Quick actions'}</div>
+        <div className="act-grid">
+          {[
+            {ico:'⚡',t_es:'Sesión\nlibre',t_en:'Free\nsession',s_es:'Entrená ahora',s_en:'Train now',a:'free'},
+            {ico:'📋',t_es:'Desde\nprograma',t_en:'From\nprogram',s_es:'Elegí un programa',s_en:'Pick a program',a:'program'},
+            {ico:'🔗',t_es:'Programas\n/ Complejos',t_en:'Programs\n/ Complexes',s_es:'Creá o elegí',s_en:'Create or pick',a:'programs'},
+            {ico:'📚',t_es:'Biblioteca',t_en:'Library',s_es:'Todos los ejercicios',s_en:'All exercises',a:'library'},
+          ].map(x=>(
+            <div key={x.a} className="act-card" onClick={()=>onAction(x.a)}>
+              <div className="act-ico">{x.ico}</div>
+              <div className="act-title" style={{whiteSpace:'pre-line'}}>{lang==='es'?x.t_es:x.t_en}</div>
+              <div className="act-sub">{lang==='es'?x.s_es:x.s_en}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {last && (
+        <>
+          <div className="sec-lbl" style={{ padding:'0 18px',marginBottom:10 }}>{lang==='es'?'Última sesión':'Last session'}</div>
+          <div style={{ margin:'0 18px 16px',padding:14,background:'var(--card)',border:'1.5px solid var(--border)',borderRadius:'var(--r)' }}>
+            <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4 }}>
+              <div style={{ fontFamily:'var(--fd)',fontSize:22,lineHeight:1 }}>{ENERGY_ICO[last.energy]} {last.program}</div>
+              <div style={{ fontFamily:'var(--fm)',fontSize:13,color:'var(--hinge)' }}>{last.duration} min</div>
+            </div>
+            <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}>{fmtDate(last.date,lang)}</div>
+            <div style={{ fontSize:12,color:'var(--ink3)',marginTop:6 }}>
+              {last.blocks.flatMap(b=>b.exercises).slice(0,3).map(e=>lang==='es'?e.name_es:e.name_en).join(', ')}
+              {last.blocks.flatMap(b=>b.exercises).length>3?'...':''}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── LIBRARY SCREEN ───────────────────────────────────────────────────────────
+function LibraryScreen({ lang, sessionActive, onAddToSession }) {
+  const [cat, setCat] = useState('all');
+  const [search, setSearch] = useState('');
+  const [selectedEx, setSelectedEx] = useState(null);
+  const cats = ['all','kb','bw','hinge','push','pull','squat','core','carry'];
+  const catLabels = { all:{es:'Todos',en:'All'},kb:{es:'Kettlebell',en:'Kettlebell'},bw:{es:'Calistenia',en:'Calisthenics'},hinge:{es:'Bisagra',en:'Hinge'},push:{es:'Empuje',en:'Push'},pull:{es:'Tirón',en:'Pull'},squat:{es:'Sentadilla',en:'Squat'},core:{es:'Core',en:'Core'},carry:{es:'Carry',en:'Carry'} };
+  const filtered = EXERCISES.filter(e => (cat==='all'||e.cat.includes(cat)) && (!search||exName(e,lang).toLowerCase().includes(search.toLowerCase())));
+  return (
+    <div className="screen">
+      <div style={{ padding:'18px 18px 10px',borderBottom:'1.5px solid var(--border)',display:'flex',alignItems:'flex-end',justifyContent:'space-between' }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:36,letterSpacing:'.02em' }}>{lang==='es'?'Biblioteca':'Library'}</div>
+        <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}>{filtered.length} {lang==='es'?'ejercicios':'exercises'}</div>
+      </div>
+      <div style={{ paddingTop:12 }}>
+        <div className="search-wrap">
+          <span className="search-ico">⌕</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={lang==='es'?'Buscar ejercicio...':'Search exercise...'} style={{ paddingLeft:36 }} />
+        </div>
+        <div className="chips" style={{ padding:'0 18px 14px' }}>
+          {cats.map(c=>(
+            <div key={c} className={`chip${cat===c?' on':''}`} onClick={()=>setCat(c)}>{lang==='es'?catLabels[c].es:catLabels[c].en}</div>
+          ))}
+        </div>
+      </div>
+      <div style={{ paddingBottom:80 }}>
+        {filtered.map(ex=>{
+          const pc=getPrimCat(ex); const col=CAT_COLORS[pc]||'var(--ink3)';
+          return (
+            <div key={ex.id} className="ex-row" style={{ borderLeft:`3px solid ${col}` }} onClick={()=>setSelectedEx(ex)}>
+              <div className="ex-ico">{ex.ico}</div>
+              <div className="ex-info">
+                <div style={{ fontFamily:'var(--fb)',fontWeight:600,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{exName(ex,lang)}</div>
+                <div style={{ display:'flex',gap:5,marginTop:4,flexWrap:'wrap' }}>
+                  <span className="tag" style={{ color:ex.type==='kb'?'var(--ink)':'var(--ink2)',borderColor:'var(--border2)' }}>{ex.type.toUpperCase()}</span>
+                  <span className="tag" style={{ color:col,borderColor:col }}>{pc}</span>
+                </div>
+              </div>
+              <span style={{ color:'var(--ink3)',fontSize:14 }}>›</span>
+            </div>
+          );
+        })}
+      </div>
+      {selectedEx && (
+        <ExDetailModal ex={selectedEx} lang={lang} sessionActive={sessionActive}
+          onAdd={()=>{ onAddToSession(selectedEx.id); setSelectedEx(null); }}
+          onClose={()=>setSelectedEx(null)} />
+      )}
+    </div>
+  );
+}
+
+// ─── HISTORY SCREEN ───────────────────────────────────────────────────────────
+function HistoryScreen({ lang, history }) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const wkS = new Date(now); wkS.setDate(now.getDate()-now.getDay());
+  const wkCount = history.filter(h=>new Date(h.date+'T12:00:00')>=wkS).length;
+  const streak = (() => {
+    const dates=new Set(history.map(h=>h.date)); let s=0,c=new Date(); c.setHours(0,0,0,0);
+    while(dates.has(c.toISOString().split('T')[0])){s++;c.setDate(c.getDate()-1);}
+    return s;
+  })();
+  const avgVol = (() => {
+    const vols=history.map(sess=>sess.blocks.flatMap(b=>b.exercises).flatMap(e=>e.sets).reduce((a,s)=>a+s.kg*s.reps,0)).filter(v=>v>0);
+    return vols.length ? Math.round(vols.reduce((a,v)=>a+v,0)/vols.length) : 0;
+  })();
+  return (
+    <div className="screen">
+      <div style={{ padding:'18px 18px 14px',borderBottom:'1.5px solid var(--border)',display:'flex',alignItems:'flex-end',justifyContent:'space-between' }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:36,letterSpacing:'.02em' }}>{lang==='es'?'Historial':'History'}</div>
+        <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}>{history.length} {lang==='es'?'sesiones':'sessions'}</div>
+      </div>
+      <div className="stats-band">
+        {[{v:history.length,l:lang==='es'?'Total':'Total'},{v:wkCount,l:lang==='es'?'Semana':'Week'},{v:streak,l:lang==='es'?'Racha':'Streak'},{v:avgVol,l:'Kg/ses'}].map((s,i)=>(
+          <div key={i} className="sbc">
+            <div className="sbc-v">{s.v}</div>
+            <div style={{ fontFamily:'var(--fm)',fontSize:9,color:'var(--ink3)',letterSpacing:'.08em',textTransform:'uppercase',marginTop:3 }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding:'14px 0 80px' }}>
+        {history.length===0 ? (
+          <div className="empty">
+            <div style={{ fontSize:36,opacity:.3,marginBottom:10 }}>📊</div>
+            <div style={{ fontFamily:'var(--fd)',fontSize:20,color:'var(--ink3)' }}>{lang==='es'?'Sin sesiones aún':'No sessions yet'}</div>
+          </div>
+        ) : history.map(sess=>{
+          const allExs = sess.blocks.flatMap(b=>b.exercises);
+          const eIco = ENERGY_ICO[sess.energy]||'';
+          return (
+            <div key={sess.id} className="hist-card">
+              <div className="hist-hdr">
+                <div>
+                  <div style={{ fontFamily:'var(--fd)',fontSize:20,lineHeight:1 }}>{eIco} {sess.program}</div>
+                  <div style={{ fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',marginTop:2 }}>{fmtDate(sess.date,lang)}</div>
+                </div>
+                <div className="hist-dur">{sess.duration} min</div>
+              </div>
+              <div style={{ padding:'10px 14px',display:'flex',flexDirection:'column',gap:6 }}>
+                {allExs.map((e,i)=>{
+                  const vol=e.sets.reduce((a,s)=>a+s.kg*s.reps,0);
+                  const bw=e.sets.every(s=>s.kg===0);
+                  const det=`${e.sets.length} ${lang==='es'?'series':'sets'}${!bw&&vol>0?' · '+vol+' kg':''}`;
+                  return (
+                    <div key={i} style={{ display:'flex',alignItems:'center',gap:8 }}>
+                      <div style={{ flex:1,fontFamily:'var(--fb)',fontSize:14,fontWeight:500 }}>{lang==='es'?e.name_es:e.name_en}</div>
+                      <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)' }}>{det}</div>
+                    </div>
+                  );
+                })}
+                {sess.notes && <div style={{ marginTop:6,paddingTop:8,borderTop:'1px solid var(--border)',fontSize:12,color:'var(--ink3)',fontStyle:'italic',lineHeight:1.5 }}>{sess.notes}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── ENERGY CHECK ─────────────────────────────────────────────────────────────
+function EnergyCheck({ lang, onSelect, onSkip }) {
+  const [sel, setSel] = useState(null);
+  const opts = [
+    {k:'fire',ico:'🔥',es:'Estoy cargado',en:'Fired up',sub_es:'Sesión completa',sub_en:'Full session'},
+    {k:'good',ico:'💪',es:'Bien',en:'Good',sub_es:'Ritmo normal',sub_en:'Normal pace'},
+    {k:'ok',ico:'😐',es:'Regular',en:'So-so',sub_es:'Sesión moderada',sub_en:'Moderate'},
+    {k:'tired',ico:'😴',es:'Cansado',en:'Tired',sub_es:'20 min, 1 KB',sub_en:'20 min, 1 KB'},
+  ];
+  const pick = k => { setSel(k); setTimeout(()=>onSelect(k),350); };
+  return (
+    <div className="energy-screen">
+      <div style={{ fontFamily:'var(--fd)',fontSize:52,lineHeight:.9,marginBottom:8 }}>{lang==='es'?'¿CÓMO\nESTÁS?':'HOW ARE\nYOU?'}</div>
+      <div style={{ fontSize:14,color:'var(--ink2)',lineHeight:1.6,maxWidth:280 }}>{lang==='es'?'Tu energía define la sesión de hoy. Ser honesto es más inteligente que entrenar al fallo.':'Your energy defines today\'s session. Being honest is smarter than training to failure.'}</div>
+      <div className="ec-opts">
+        {opts.map(o=>(
+          <div key={o.k} className={`ec-opt${sel===o.k?' sel':''}`} onClick={()=>pick(o.k)}>
+            <span style={{ fontSize:32,display:'block',marginBottom:6 }}>{o.ico}</span>
+            <p style={{ fontFamily:'var(--fb)',fontWeight:600,fontSize:13,color:'var(--ink)',margin:0 }}>{lang==='es'?o.es:o.en}</p>
+            <p style={{ fontSize:11,color:'var(--ink3)',marginTop:2 }}>{lang==='es'?o.sub_es:o.sub_en}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop:20,fontFamily:'var(--fb)',fontSize:12,color:'var(--ink3)',cursor:'pointer',textDecoration:'underline' }} onClick={onSkip}>
+        {lang==='es'?'Saltar y empezar':'Skip and start'}
+      </div>
+    </div>
+  );
+}
+
+// ─── SESSION REDUCER ─────────────────────────────────────────────────────────
+function sessionReducer(state, action) {
+  switch(action.type) {
+    case 'START':
+      return { ...state, active:true, progName:action.progName, energy:action.energy, elapsed:0, blocks:action.blocks||[] };
+    case 'TICK':
+      return { ...state, elapsed: state.elapsed+1 };
+    case 'ADD_BLOCK':
+      return { ...state, blocks: [...state.blocks, action.block] };
+    case 'REMOVE_BLOCK':
+      return { ...state, blocks: state.blocks.filter(b=>b.id!==action.id) };
+    case 'END_SESSION':
+      return { ...state, active:false, blocks:[], elapsed:0, progName:'', energy:null };
+    default:
+      return state;
+  }
+}
+
+// ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
+function LoginScreen({ lang, onLogin, error }) {
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    setLoading(true);
+    try { await onLogin(); }
+    catch(e) { setLoading(false); }
+  };
+  return (
+    <div style={{ position:'fixed',inset:0,background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,textAlign:'center',maxWidth:430,margin:'0 auto',zIndex:300 }}>
+      <div style={{ fontFamily:'var(--fd)',fontSize:64,letterSpacing:'.04em',marginBottom:4,lineHeight:1 }}>IRON LOG</div>
+      <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)',letterSpacing:'.15em',textTransform:'uppercase',marginBottom:48 }}>KB · CALISTENIA · FUERZA</div>
+      <div style={{ width:'100%',maxWidth:300,display:'flex',flexDirection:'column',gap:12 }}>
+        <button
+          onClick={handle}
+          disabled={loading}
+          style={{ height:52,borderRadius:30,border:'1.5px solid var(--border2)',background:'var(--card)',color:'var(--ink)',fontFamily:'var(--fb)',fontWeight:600,fontSize:15,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,transition:'all .15s',opacity:loading?.6:1 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          {loading ? (lang==='es'?'Entrando...':'Signing in...') : (lang==='es'?'Entrar con Google':'Sign in with Google')}
+        </button>
+        {error && (
+          <div style={{ padding:'10px 14px',background:'rgba(196,88,58,.1)',border:'1px solid rgba(196,88,58,.3)',borderRadius:'var(--rsm)',fontSize:12,color:'var(--red)' }}>
+            {lang==='es'?'Error al iniciar sesión. Intentá de nuevo.':'Sign in failed. Please try again.'}
+          </div>
+        )}
+      </div>
+      <div style={{ position:'absolute',bottom:32,fontFamily:'var(--fm)',fontSize:10,color:'var(--ink3)',letterSpacing:'.08em' }}>
+        Dan John · Geoff Neupert · Pavel Tsatsouline
+      </div>
+    </div>
+  );
+}
+
+
+function SettingsScreen({ lang, syncStatus, onSync, dbReady, user, onSignOut }) {
+  return (
+    <div className="screen" style={{ padding:'0 18px 80px' }}>
+      <div style={{ padding:'18px 0 16px',borderBottom:'1.5px solid var(--border)',marginBottom:20 }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:36,letterSpacing:'.02em' }}>{lang==='es'?'Ajustes':'Settings'}</div>
+      </div>
+
+      {/* User card */}
+      {user && (
+        <div style={{ background:'var(--card)',border:'1.5px solid var(--border)',borderRadius:'var(--r)',padding:16,marginBottom:16,display:'flex',alignItems:'center',gap:12 }}>
+          {user.photoURL
+            ? <img src={user.photoURL} style={{ width:44,height:44,borderRadius:'50%',flexShrink:0 }} alt="" />
+            : <div style={{ width:44,height:44,borderRadius:'50%',background:'var(--bg2)',border:'1.5px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0 }}>👤</div>
+          }
+          <div style={{ flex:1,minWidth:0 }}>
+            <div style={{ fontFamily:'var(--fb)',fontWeight:600,fontSize:15,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{user.displayName||'Usuario'}</div>
+            <div style={{ fontFamily:'var(--fm)',fontSize:11,color:'var(--ink3)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{user.email}</div>
+          </div>
+          <button className="btn btn-out btn-sm" onClick={onSignOut}>{lang==='es'?'Salir':'Sign out'}</button>
+        </div>
+      )}
+
+      {/* Firebase sync */}
+      <div style={{ background:'var(--card)',border:'1.5px solid var(--border)',borderRadius:'var(--r)',padding:16,marginBottom:16 }}>
+        <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:8 }}>
+          <span style={{ fontSize:20 }}>🔥</span>
+          <div style={{ fontFamily:'var(--fd)',fontSize:20 }}>Firebase</div>
+          <div style={{ marginLeft:'auto',padding:'3px 10px',borderRadius:20,fontSize:11,fontFamily:'var(--fm)',
+            background: dbReady?'rgba(58,164,110,.15)':'rgba(160,152,144,.15)',
+            color: dbReady?'var(--squat)':'var(--ink3)',
+            border: `1px solid ${dbReady?'rgba(58,164,110,.3)':'var(--border2)'}` }}>
+            {dbReady?(lang==='es'?'● Conectado':'● Connected'):(lang==='es'?'○ Sin conexión':'○ Offline')}
+          </div>
+        </div>
+        <div style={{ fontSize:12,color:'var(--ink3)',lineHeight:1.6,marginBottom:12 }}>
+          {lang==='es'
+            ? 'Tu historial se sincroniza automáticamente. Cada usuario tiene sus propios datos.'
+            : 'Your history syncs automatically. Each user has their own data.'}
+        </div>
+        <button className="btn btn-ink btn-sm" style={{ width:'100%' }} onClick={onSync} disabled={!dbReady}>
+          {syncStatus==='syncing'?'⏳ '+(lang==='es'?'Sincronizando...':'Syncing...')
+           :syncStatus==='ok'   ?'✓ '+(lang==='es'?'Sincronizado':'Synced')
+           :                     '↑↓ '+(lang==='es'?'Sincronizar ahora':'Sync now')}
+        </button>
+      </div>
+
+      <div style={{ background:'var(--card)',border:'1.5px solid var(--border)',borderRadius:'var(--r)',padding:16 }}>
+        <div style={{ fontFamily:'var(--fd)',fontSize:20,marginBottom:8 }}>Iron Log</div>
+        <div style={{ fontSize:12,color:'var(--ink3)',lineHeight:1.6 }}>
+          {lang==='es'
+            ? 'App de KB y calistenia basada en Dan John, Geoff Neupert y Pavel Tsatsouline.'
+            : 'KB and calisthenics app based on Dan John, Geoff Neupert and Pavel Tsatsouline.'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function App() {
+  const [lang, setLang] = useState(loadLS('il_lang','es'));
+  const [dark, setDark] = useState(loadLS('il_dark',false));
+  const [screen, setScreen] = useState('home');
+  const sessGetterRef = useRef(null);
+  const [history, setHistory] = useState(SAMPLE_HIST);
+  const [userPrograms, setUserPrograms] = useState([]);
+  const [customComplexes, setCustomComplexes] = useState([]);
+  const [syncStatus, setSyncStatus] = useState('idle');
+  const [dbReady, setDbReady] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [showEnergy, setShowEnergy] = useState(false);
+  const [pendingStart, setPendingStart] = useState(null);
+  const [sessState, sessDispatch] = React.useReducer(sessionReducer, { active:false, progName:'', energy:null, elapsed:0, blocks:[] });
+  const elIvRef = useRef(null);
+  const toastTRef = useRef(null);
+
+  // Init Firebase + auth listener
+  useEffect(() => {
+    const ok = initFirebase();
+    setDbReady(ok);
+    if (!ok) { setAuthReady(true); return; }
+    const unsub = onAuthChange(u => {
+      setUser(u);
+      setAuthReady(true);
+      if (u) {
+        setHistory(loadLS('il4_hist_'+u.uid, SAMPLE_HIST));
+        setUserPrograms(loadLS('il4_uprogs_'+u.uid, []));
+        setCustomComplexes(loadLS('il4_cxcustom_'+u.uid, []));
+      }
+    });
+    return unsub;
+  }, []);
+
+  const uid = user?.uid || null;
+
+  // Persist to localStorage (per user)
+  useEffect(()=>{ if(uid) saveLS('il4_hist_'+uid, history); },[history, uid]);
+  useEffect(()=>{ if(uid) saveLS('il4_uprogs_'+uid, userPrograms); },[userPrograms, uid]);
+  useEffect(()=>{ if(uid) saveLS('il4_cxcustom_'+uid, customComplexes); },[customComplexes, uid]);
+
+  // Firebase sync (per user)
+  const syncNow = useCallback(async () => {
+    if (!dbReady || !uid || !navigator.onLine) { showToast(lang==='es'?'SIN CONEXIÓN':'NO CONNECTION'); return; }
+    setSyncStatus('syncing');
+    try {
+      const [remoteSess, remoteProgs, remoteCx] = await Promise.all([
+        fbGetAll(uid,'sessions'), fbGetAll(uid,'programs'), fbGetAll(uid,'complexes')
+      ]);
+      if (remoteSess.length) {
+        setHistory(local => {
+          const ids = new Set(remoteSess.map(s=>s.id));
+          const localOnly = local.filter(s=>!ids.has(s.id));
+          return [...remoteSess, ...localOnly].sort((a,b)=>b.date.localeCompare(a.date));
+        });
+      }
+      if (remoteProgs.length) setUserPrograms(remoteProgs.map(p=>({...p,builtin:false})));
+      if (remoteCx.length)   setCustomComplexes(remoteCx.map(c=>({...c,type:'custom'})));
+      setSyncStatus('ok');
+      showToast(lang==='es'?'SINCRONIZADO ✓':'SYNCED ✓');
+      setTimeout(()=>setSyncStatus('idle'), 3000);
+    } catch(e) {
+      setSyncStatus('error');
+      showToast(lang==='es'?'ERROR DE SYNC':'SYNC ERROR');
+      setTimeout(()=>setSyncStatus('idle'), 3000);
+    }
+  }, [dbReady, uid, lang, showToast]);
+  useEffect(()=>{ saveLS('il_lang', lang); },[lang]);
+  useEffect(()=>{ saveLS('il_dark', dark); },[dark]);
+  // theme
+  useEffect(()=>{
+    if(dark) document.documentElement.setAttribute('data-dark','');
+    else document.documentElement.removeAttribute('data-dark');
+  },[dark]);
+  // elapsed timer
+  useEffect(()=>{
+    if(sessState.active){
+      elIvRef.current=setInterval(()=>sessDispatch({type:'TICK'}),1000);
+    } else {
+      clearInterval(elIvRef.current);
+    }
+    return ()=>clearInterval(elIvRef.current);
+  },[sessState.active]);
+  const showToast = useCallback((msg, dur=2200)=>{
+    setToast(msg);
+    clearTimeout(toastTRef.current);
+    toastTRef.current=setTimeout(()=>setToast(null),dur);
+  },[]);
+  // start flow
+  const triggerStart = useCallback((progName, blocks)=>{
+    setPendingStart({progName,blocks});
+    setShowEnergy(true);
+  },[]);
+  const onEnergySelect = useCallback((energy)=>{
+    setShowEnergy(false);
+    if(!pendingStart) return;
+    sessDispatch({ type:'START', progName:pendingStart.progName, energy, blocks:pendingStart.blocks||[] });
+    setPendingStart(null);
+    setScreen('session');
+    showToast(lang==='es'?'SESIÓN INICIADA':'SESSION STARTED');
+    if(energy==='tired') setTimeout(()=>showToast(lang==='es'?'😴 Sesión corta — 20 min, 1 KB':'😴 Short session recommended',3500),500);
+    if(energy==='fire') setTimeout(()=>showToast(lang==='es'?'🔥 A darlo todo hoy':'🔥 Give it everything today'),2000);
+  },[pendingStart, lang, showToast]);
+  const handleHomeAction = useCallback(a=>{
+    if(a==='free') triggerStart(lang==='es'?'SESIÓN LIBRE':'FREE SESSION',[]);
+    else if(a==='program'||a==='programs') setScreen('programs');
+    else if(a==='library') setScreen('library');
+  },[triggerStart,lang]);
+  const handleStartProg = useCallback(p=>{
+    const blocks = (p.blocks||[]).map(b => {
+      if(b.type==='complex'&&b.complexId){
+        const cx=cxById(b.complexId,customComplexes);
+        if(cx) return { ...b, id:uid(), steps:cx.steps.map(s=>({exId:s.exId,reps:typeof s.reps==='string'?parseInt(s.reps)||1:(s.reps||1)})), exIds:cx.steps.map(s=>s.exId), cfg:{rounds:cx.rounds,rest:cx.rest} };
+      }
+      return { ...b, id:uid() };
+    });
+    triggerStart(lang==='es'?p.es:p.en, blocks);
+  },[triggerStart,lang,customComplexes]);
+  const handleStartCx = useCallback(cx=>{
+    const blocks = [{ id:uid(), type:'complex', name:lang==='es'?cx.es:cx.en, cfg:{rounds:cx.rounds,rest:cx.rest}, steps:cx.steps.map(s=>({exId:s.exId,reps:typeof s.reps==='string'?parseInt(s.reps)||1:(s.reps||1)})), exIds:cx.steps.map(s=>s.exId) }];
+    triggerStart(lang==='es'?cx.es:cx.en, blocks);
+  },[triggerStart,lang]);
+  const handleAddToSession = useCallback(exId=>{
+    sessDispatch({ type:'ADD_BLOCK', block:{ id:uid(), type:'free', name:exName(exById(exId),lang)||'Ejercicio', cfg:{}, exIds:[exId] }});
+    showToast(lang==='es'?'EJERCICIO AGREGADO':'EXERCISE ADDED');
+  },[lang,showToast]);
+  // end session — harvest sets from DOM via React state inside SessionBlock components
+  // We use a ref to collect data
+  const handleEndSession = useCallback((note)=>{
+    const realBlocks = sessGetterRef.current ? sessGetterRef.current() : sessState.blocks.map(b => ({ type:b.type, name:b.name, exercises:[] }));
+    const entry = {
+      id:'h'+Date.now(), date:new Date().toISOString().split('T')[0],
+      program:sessState.progName, duration:Math.max(1,Math.round(sessState.elapsed/60)),
+      energy:sessState.energy||'good', notes:note,
+      blocks: realBlocks,
+    };
+    setHistory(h=>[entry,...h]);
+    sessDispatch({type:'END_SESSION'});
+    showToast(lang==='es'?'SESIÓN GUARDADA':'SESSION SAVED');
+    setScreen('history');
+    // Auto-save to Firebase
+    if (dbReady && uid && navigator.onLine) {
+      fbSet(uid, 'sessions', entry.id, entry).catch(()=>{});
+    }
+  },[sessState, lang, showToast, dbReady, uid]);
+
+  const navItems = [
+    {id:'home',   ico:'⌂',  es:'Home',      en:'Home'},
+    {id:'library',ico:'📚', es:'Ejercicios', en:'Exercises'},
+    {id:'programs',ico:'📋',es:'Programas',  en:'Programs'},
+    {id:'session',ico:'⚡', es:'Sesión',     en:'Session'},
+    {id:'history',ico:'📊', es:'Historial',  en:'History'},
+    {id:'settings',ico:'⚙',es:'Ajustes',    en:'Settings'},
+  ];
+
+  // Auth gate
+  if (!authReady) return (
+    <div style={{ position:'fixed',inset:0,background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+      <div style={{ fontFamily:'var(--fd)',fontSize:32,color:'var(--ink3)',letterSpacing:'.1em' }}>IRON LOG</div>
+    </div>
+  );
+  if (!user) return (
+    <LoginScreen lang={lang}
+      onLogin={async()=>{ setLoginError(false); try{ await signInWithGoogle(); }catch(e){ setLoginError(true); throw e; } }}
+      error={loginError}
+    />
+  );
+
+  return (
+    <div className="app">
+      <div className="hdr">
+        <div className="logo">IRON LOG</div>
+        <div className="hdr-right">
+          <button className="ctrl" onClick={()=>setLang(l=>l==='es'?'en':'es')}>{lang==='es'?'EN':'ES'}</button>
+          <button className="ctrl" onClick={()=>setDark(d=>!d)}>{dark?'☀':'☾'}</button>
+          <div
+            className={`dot${dbReady?(syncStatus==='syncing'?' syncing':' on'):''}`}
+            title={dbReady?'Firebase conectado':'Offline'}
+            onClick={()=>dbReady&&syncNow()}
+            style={{ cursor: dbReady?'pointer':'default' }}
+          />
+        </div>
+      </div>
+      <div className="content">
+        {screen==='home'     && <HomeScreen lang={lang} history={history} onAction={handleHomeAction} />}
+        {screen==='library'  && <LibraryScreen lang={lang} sessionActive={sessState.active} onAddToSession={id=>{handleAddToSession(id);setScreen('session');}} />}
+        {screen==='programs' && (
+          <ProgramsScreen lang={lang} userPrograms={userPrograms} customComplexes={customComplexes}
+            onSaveProg={p=>{ setUserPrograms(ps=>[...ps,p]); showToast(lang==='es'?'PROGRAMA GUARDADO':'PROGRAM SAVED'); if(dbReady&&uid) fbSet(uid,'programs',p.id,p).catch(()=>{}); }}
+            onDeleteProg={id=>{ setUserPrograms(ps=>ps.filter(p=>p.id!==id)); if(dbReady&&uid) fbDel(uid,'programs',id).catch(()=>{}); }}
+            onSaveCx={cx=>{ setCustomComplexes(cs=>[...cs,cx]); showToast(lang==='es'?'COMPLEJO GUARDADO':'COMPLEX SAVED'); if(dbReady&&uid) fbSet(uid,'complexes',cx.id,cx).catch(()=>{}); }}
+            onStartProg={p=>handleStartProg(p)}
+            onStartCx={cx=>handleStartCx(cx)}
+          />
+        )}
+        {screen==='session'  && (
+          <SessionScreen lang={lang} history={history} customComplexes={customComplexes}
+            state={sessState} dispatch={a=>{
+              if(a.type==='END_SESSION') handleEndSession(a.note);
+              else if(a.type==='REGISTER_GETTER') { sessGetterRef.current = a.getter; }
+              else sessDispatch(a);
+            }}
+          />
+        )}
+        {screen==='history'  && <HistoryScreen lang={lang} history={history} />}
+        {screen==='settings' && (
+          <SettingsScreen lang={lang} syncStatus={syncStatus} onSync={syncNow} dbReady={dbReady}
+            user={user} onSignOut={()=>{ signOut(); setHistory(SAMPLE_HIST); setUserPrograms([]); setCustomComplexes([]); }} />
+        )}
+      </div>
+      <div className="nav">
+        {navItems.map(n=>(
+          <button key={n.id} className={`nb${screen===n.id?' on':''}`} onClick={()=>setScreen(n.id)}>
+            <span className="nb-ico">{n.ico}</span>
+            <span>{lang==='es'?n.es:n.en}</span>
+          </button>
+        ))}
+      </div>
+      {showEnergy && <EnergyCheck lang={lang} onSelect={onEnergySelect} onSkip={()=>{setShowEnergy(false);if(pendingStart){sessDispatch({type:'START',progName:pendingStart.progName,energy:'good',blocks:pendingStart.blocks||[]});setPendingStart(null);setScreen('session');}}} />}
+      <Toast msg={toast} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
